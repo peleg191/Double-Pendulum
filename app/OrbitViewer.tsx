@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+declare const __PAGES_BUILD__: boolean;
+
 type OrbitRecord = { id: string; energy: number; period: number; family_id: string; trajectory: string; mat?: string; video?: string };
 type FamilyRecord = { id: string; label: string; saddle_energy: number; orbit_count: number };
 type Manifest = { schema_version: number; generated_at?: string; families: FamilyRecord[]; orbits: OrbitRecord[] };
@@ -20,6 +22,8 @@ type CanvasPalette = {
 };
 
 const TAU = Math.PI * 2;
+const includeMatDownloads = typeof __PAGES_BUILD__ === "undefined" || !__PAGES_BUILD__;
+const assetUrl = (path: string) => new URL(path.replace(/^\/+/, ""), document.baseURI).toString();
 const wrapAngle = (angle: number) => ((angle + Math.PI) % TAU + TAU) % TAU - Math.PI;
 const wrapAnglePositive = (angle: number) => ((angle % TAU) + TAU) % TAU;
 
@@ -271,7 +275,7 @@ export function OrbitViewer() {
   }, [theme]);
 
   useEffect(() => {
-    fetch("/data/manifest.json").then((response) => {
+    fetch(assetUrl("data/manifest.json")).then((response) => {
       if (!response.ok) throw new Error("Manifest unavailable");
       return response.json();
     }).then((data: Manifest) => {
@@ -289,7 +293,7 @@ export function OrbitViewer() {
     const record = manifest.orbits.find((item) => item.id === selectedId);
     if (!record) return;
     setOrbit(null); setError(""); setPlaying(false); setPhase(0);
-    fetch(`/${record.trajectory}`).then((response) => {
+    fetch(assetUrl(record.trajectory)).then((response) => {
       if (!response.ok) throw new Error("Orbit unavailable");
       return response.json();
     }).then((data: OrbitData) => {
@@ -338,7 +342,7 @@ export function OrbitViewer() {
             <dl className="data-strip"><div className="datum"><dt>Energy</dt><dd>{orbit.metadata.energy.toFixed(3)}</dd></div><div className="datum"><dt>Period</dt><dd>{orbit.metadata.period.toFixed(4)}</dd></div><div className="datum"><dt>Family</dt><dd>{orbit.metadata.family_id}</dd></div><div className="datum"><dt>Samples</dt><dd>{orbit.metadata.sample_count}</dd></div></dl>
           </>}
         </section>
-        <section className="method-note"><div><h2>Coordinate convention</h2><p>Angles are measured from the downward vertical. {selectedFamilyId === "saddle_E4" ? <>For this family, θ<sub>1</sub> ∈ [0, 2π] and θ<sub>2</sub> ∈ [−π, π].</> : <>For this family, θ<sub>1</sub> ∈ [−π, π] and θ<sub>2</sub> ∈ [0, 2π].</>} Paths are broken where they cross a plotted torus boundary.</p></div><div><h2>Numerical provenance</h2><p>MATLAB-generated <code>.mat</code> trajectories are the authoritative research data. A preprocessing step validates them and exports the web representation discovered through the manifest.</p>{record?.mat && <p><a href={`/${record.mat}`}>Download source MAT</a></p>}</div></section>
+        <section className="method-note"><div><h2>Coordinate convention</h2><p>Angles are measured from the downward vertical. {selectedFamilyId === "saddle_E4" ? <>For this family, θ<sub>1</sub> ∈ [0, 2π] and θ<sub>2</sub> ∈ [−π, π].</> : <>For this family, θ<sub>1</sub> ∈ [−π, π] and θ<sub>2</sub> ∈ [0, 2π].</>} Paths are broken where they cross a plotted torus boundary.</p></div><div><h2>Numerical provenance</h2><p>MATLAB-generated <code>.mat</code> trajectories are the authoritative research data. A preprocessing step validates them and exports the web representation discovered through the manifest.</p>{includeMatDownloads && record?.mat && <p><a href={assetUrl(record.mat)}>Download source MAT</a></p>}</div></section>
       </div>
     </main>
   );
