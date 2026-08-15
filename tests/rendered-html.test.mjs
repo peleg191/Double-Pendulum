@@ -20,6 +20,7 @@ test("server-renders the scientific viewer", async () => {
   assert.match(html, /Coordinate convention/);
   assert.match(html, /Loading trajectory/);
   assert.match(html, /Computed orbit|Family/);
+  assert.match(html, /Light mode/);
   assert.doesNotMatch(html, /Demonstration dataset/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
@@ -37,4 +38,17 @@ test("exported orbit obeys the documented structural contract", async () => {
   assert.ok(t.every((value, index) => index === 0 || value > t[index - 1]));
   assert.equal(t.at(0), 0);
   assert.ok(Math.abs(t.at(-1) - data.metadata.period) < 1e-12);
+});
+
+test("exported trajectories stay outside the energetically forbidden region", async () => {
+  const manifest = JSON.parse(await readFile(new URL("../public/data/manifest.json", import.meta.url), "utf8"));
+  for (const record of manifest.orbits) {
+    const data = JSON.parse(await readFile(new URL(`../public/${record.trajectory}`, import.meta.url), "utf8"));
+    const { theta1, theta2 } = data.trajectory;
+    const maximumViolation = theta1.reduce((maximum, value, index) => {
+      const potential = 3 - 2 * Math.cos(value) - Math.cos(theta2[index]);
+      return Math.max(maximum, potential - data.metadata.energy);
+    }, -Infinity);
+    assert.ok(maximumViolation < 1e-6, `${record.id} enters V > E by ${maximumViolation}`);
+  }
 });

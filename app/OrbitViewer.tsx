@@ -12,10 +12,29 @@ type OrbitData = {
   trajectory: { t: number[]; theta1: number[]; theta2: number[]; p1?: number[]; p2?: number[] };
   validation?: { periodic_residual: number };
 };
+type ThemeMode = "light" | "dark";
+type CanvasPalette = {
+  background: string; foreground: string; muted: string; guide: string;
+  pendulum1: string; pendulum1Glow: string; pendulum1Trail: string;
+  pendulum2: string; pendulum2Glow: string; pendulum2Trail: string;
+  phasePath: string; grid: string; forbidden: string; forbiddenBoundary: string;
+};
 
 const TAU = Math.PI * 2;
 const wrapAngle = (angle: number) => ((angle + Math.PI) % TAU + TAU) % TAU - Math.PI;
 const wrapAnglePositive = (angle: number) => ((angle % TAU) + TAU) % TAU;
+
+const canvasPalette = (theme: ThemeMode): CanvasPalette => theme === "dark" ? {
+  background: "#08090d", foreground: "#ebeFFF", muted: "#9ea8c7", guide: "#2e3047",
+  pendulum1: "#9e59ff", pendulum1Glow: "#381473", pendulum1Trail: "#7338d9",
+  pendulum2: "#ffc72e", pendulum2Glow: "#734708", pendulum2Trail: "#f29414",
+  phasePath: "#404561", grid: "#33384f", forbidden: "rgba(204, 26, 31, .28)", forbiddenBoundary: "#ff8c59",
+} : {
+  background: "#fbfaf7", foreground: "#202033", muted: "#6f7080", guide: "#ddd9e3",
+  pendulum1: "#7540d1", pendulum1Glow: "#ddd0f6", pendulum1Trail: "#9a74df",
+  pendulum2: "#c98100", pendulum2Glow: "#f5ddb0", pendulum2Trail: "#d99b2d",
+  phasePath: "#a9a8b4", grid: "#dedbe5", forbidden: "rgba(204, 26, 31, .16)", forbiddenBoundary: "#b83f2f",
+};
 
 function sampleOrbit(orbit: OrbitData, phase: number) {
   const { t, theta1, theta2 } = orbit.trajectory;
@@ -59,10 +78,11 @@ function useCanvas(draw: (ctx: CanvasRenderingContext2D, width: number, height: 
   return ref;
 }
 
-function PendulumCanvas({ orbit, phase }: { orbit: OrbitData; phase: number }) {
+function PendulumCanvas({ orbit, phase, theme }: { orbit: OrbitData; phase: number; theme: ThemeMode }) {
   const state = sampleOrbit(orbit, phase);
   const ref = useCanvas((ctx, width, height) => {
-    ctx.clearRect(0, 0, width, height);
+    const colors = canvasPalette(theme);
+    ctx.fillStyle = colors.background; ctx.fillRect(0, 0, width, height);
     const l1 = orbit.parameters.l1 ?? 1;
     const l2 = orbit.parameters.l2 ?? 1;
     const outerPadding = 24;
@@ -71,53 +91,101 @@ function PendulumCanvas({ orbit, phase }: { orbit: OrbitData; phase: number }) {
     const origin = { x: width / 2, y: height / 2 };
     const p1 = { x: origin.x + scale * l1 * Math.sin(state.theta1), y: origin.y + scale * l1 * Math.cos(state.theta1) };
     const p2 = { x: p1.x + scale * l2 * Math.sin(state.theta2), y: p1.y + scale * l2 * Math.cos(state.theta2) };
-    ctx.strokeStyle = "#d9d6cf"; ctx.lineWidth = 1;
-    ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(origin.x, outerPadding); ctx.lineTo(origin.x, height - outerPadding); ctx.stroke(); ctx.setLineDash([]);
-    ctx.strokeStyle = "#16233a"; ctx.lineWidth = 5; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-    ctx.fillStyle = "#101b2c"; ctx.beginPath(); ctx.arc(origin.x, origin.y, 6, 0, TAU); ctx.fill();
-    ctx.fillStyle = "#3a91a8"; ctx.beginPath(); ctx.arc(p1.x, p1.y, 12, 0, TAU); ctx.fill();
-    ctx.fillStyle = "#d35e35"; ctx.beginPath(); ctx.arc(p2.x, p2.y, 15, 0, TAU); ctx.fill();
-    ctx.fillStyle = "#657086"; ctx.font = "11px monospace"; ctx.fillText("pivot", origin.x + 12, origin.y - 7);
-  }, [orbit, state.theta1, state.theta2]);
+
+    ctx.strokeStyle = colors.guide; ctx.lineWidth = .8; ctx.setLineDash([5, 6]);
+    [l1, l1 + l2].forEach((length) => { ctx.beginPath(); ctx.arc(origin.x, origin.y, scale * length, 0, TAU); ctx.stroke(); });
+    ctx.setLineDash([]); ctx.lineWidth = .6;
+    ctx.beginPath(); ctx.moveTo(origin.x - scale * (l1 + l2), origin.y); ctx.lineTo(origin.x + scale * (l1 + l2), origin.y); ctx.moveTo(origin.x, origin.y - scale * (l1 + l2)); ctx.lineTo(origin.x, origin.y + scale * (l1 + l2)); ctx.stroke();
+
+    const trail1: Array<{ x: number; y: number }> = [];
+    const trail2: Array<{ x: number; y: number }> = [];
+    for (let index = 0; index < 90; index++) {
+      const trailPhase = (phase - .13 + .13 * index / 89 + 1) % 1;
+      const trailState = sampleOrbit(orbit, trailPhase);
+      const first = { x: origin.x + scale * l1 * Math.sin(trailState.theta1), y: origin.y + scale * l1 * Math.cos(trailState.theta1) };
+      trail1.push(first);
+      trail2.push({ x: first.x + scale * l2 * Math.sin(trailState.theta2), y: first.y + scale * l2 * Math.cos(trailState.theta2) });
+    }
+    const drawTrail = (points: Array<{ x: number; y: number }>, color: string) => { ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.beginPath(); points.forEach((point, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y)); ctx.stroke(); };
+    drawTrail(trail1, colors.pendulum1Trail); drawTrail(trail2, colors.pendulum2Trail);
+
+    ctx.lineCap = "round";
+    ctx.strokeStyle = colors.pendulum1Glow; ctx.lineWidth = 12; ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+    ctx.strokeStyle = colors.pendulum2Glow; ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    ctx.strokeStyle = colors.pendulum1; ctx.lineWidth = 4.2; ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+    ctx.strokeStyle = colors.pendulum2; ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    ctx.fillStyle = colors.pendulum1Glow; ctx.beginPath(); ctx.arc(p1.x, p1.y, 17, 0, TAU); ctx.fill();
+    ctx.fillStyle = colors.pendulum2Glow; ctx.beginPath(); ctx.arc(p2.x, p2.y, 19, 0, TAU); ctx.fill();
+    ctx.fillStyle = colors.pendulum1; ctx.strokeStyle = colors.foreground; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(p1.x, p1.y, 10, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = colors.pendulum2; ctx.beginPath(); ctx.arc(p2.x, p2.y, 12, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = colors.guide; ctx.beginPath(); ctx.arc(origin.x, origin.y, 9, 0, TAU); ctx.fill();
+    ctx.fillStyle = colors.foreground; ctx.beginPath(); ctx.arc(origin.x, origin.y, 4, 0, TAU); ctx.fill();
+  }, [orbit, phase, state.theta1, state.theta2, theme]);
   return <canvas ref={ref} aria-label="Animated physical double pendulum" role="img" />;
 }
 
-function ConfigurationCanvas({ orbit, phase }: { orbit: OrbitData; phase: number }) {
+function ConfigurationCanvas({ orbit, phase, theme }: { orbit: OrbitData; phase: number; theme: ThemeMode }) {
   const state = sampleOrbit(orbit, phase);
   const ref = useCanvas((ctx, width, height) => {
-    ctx.clearRect(0, 0, width, height);
+    const colors = canvasPalette(theme);
+    ctx.fillStyle = colors.background; ctx.fillRect(0, 0, width, height);
     const isE2Family = orbit.metadata.family_id === "saddle_E2";
     const wrapX = isE2Family ? wrapAngle : wrapAnglePositive;
     const wrapY = isE2Family ? wrapAnglePositive : wrapAngle;
     const normalizeX = (value: number) => isE2Family ? (wrapX(value) + Math.PI) / TAU : wrapX(value) / TAU;
     const normalizeY = (value: number) => isE2Family ? wrapY(value) / TAU : (wrapY(value) + Math.PI) / TAU;
-    const xTicks = isE2Family ? ["−π", "0", "+π"] : ["0", "π", "2π"];
-    const yTicks = isE2Family ? ["2π", "π", "0"] : ["+π", "0", "−π"];
+    const xTicks = isE2Family ? ["−π", "−π/2", "0", "π/2", "+π"] : ["0", "π/2", "π", "3π/2", "2π"];
+    const yTicks = isE2Family ? ["2π", "3π/2", "π", "π/2", "0"] : ["+π", "π/2", "0", "−π/2", "−π"];
     const margin = { left: 62, right: 24, top: 22, bottom: 42 };
     const plotW = width - margin.left - margin.right, plotH = height - margin.top - margin.bottom;
     const x = (value: number) => margin.left + normalizeX(value) * plotW;
     const y = (value: number) => margin.top + (1 - normalizeY(value)) * plotH;
-    ctx.strokeStyle = "#e3e0d9"; ctx.lineWidth = 1;
+
+    ctx.fillStyle = colors.background; ctx.fillRect(margin.left, margin.top, plotW, plotH);
+    const cell = 4;
+    const xLower = isE2Family ? -Math.PI : 0;
+    const yLower = isE2Family ? 0 : -Math.PI;
+    ctx.fillStyle = colors.forbidden;
+    for (let px = 0; px < plotW; px += cell) for (let py = 0; py < plotH; py += cell) {
+      const theta1 = xLower + ((px + cell / 2) / plotW) * TAU;
+      const theta2 = yLower + (1 - (py + cell / 2) / plotH) * TAU;
+      const potential = 3 - 2 * Math.cos(theta1) - Math.cos(theta2);
+      if (potential > orbit.metadata.energy) ctx.fillRect(margin.left + px, margin.top + py, cell + .5, cell + .5);
+    }
+
+    ctx.strokeStyle = colors.grid; ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) { const gx = margin.left + plotW * i / 4; const gy = margin.top + plotH * i / 4; ctx.beginPath(); ctx.moveTo(gx, margin.top); ctx.lineTo(gx, margin.top + plotH); ctx.stroke(); ctx.beginPath(); ctx.moveTo(margin.left, gy); ctx.lineTo(margin.left + plotW, gy); ctx.stroke(); }
-    ctx.strokeStyle = "#16233a"; ctx.lineWidth = 1.5; ctx.strokeRect(margin.left, margin.top, plotW, plotH);
-    ctx.strokeStyle = "#3a91a8"; ctx.lineWidth = 2.4; ctx.beginPath();
-    let previous: { x: number; y: number } | null = null;
-    orbit.trajectory.theta1.forEach((value, index) => {
-      const point = { x: x(value), y: y(orbit.trajectory.theta2[index]) };
-      if (!previous || Math.abs(point.x - previous.x) > plotW * .5 || Math.abs(point.y - previous.y) > plotH * .5) ctx.moveTo(point.x, point.y); else ctx.lineTo(point.x, point.y);
-      previous = point;
-    }); ctx.stroke();
+    ctx.strokeStyle = colors.foreground; ctx.lineWidth = 1.1; ctx.strokeRect(margin.left, margin.top, plotW, plotH);
+
+    const drawPath = (theta1Values: number[], theta2Values: number[], color: string, lineWidth: number) => {
+      ctx.strokeStyle = color; ctx.lineWidth = lineWidth; ctx.beginPath();
+      let previous: { x: number; y: number } | null = null;
+      theta1Values.forEach((value, index) => { const point = { x: x(value), y: y(theta2Values[index]) }; if (!previous || Math.abs(point.x - previous.x) > plotW * .5 || Math.abs(point.y - previous.y) > plotH * .5) ctx.moveTo(point.x, point.y); else ctx.lineTo(point.x, point.y); previous = point; });
+      ctx.stroke();
+    };
+    drawPath(orbit.trajectory.theta1, orbit.trajectory.theta2, colors.phasePath, 1.5);
+
+    const trailTheta1: number[] = [], trailTheta2: number[] = [];
+    for (let index = 0; index < 120; index++) { const trailState = sampleOrbit(orbit, (phase - .12 + .12 * index / 119 + 1) % 1); trailTheta1.push(trailState.theta1); trailTheta2.push(trailState.theta2); }
+    drawPath(trailTheta1, trailTheta2, colors.pendulum1, 2.3);
+
+    if (orbit.metadata.energy < 6) {
+      const drawBoundary = (upperBranch: boolean) => { ctx.strokeStyle = colors.forbiddenBoundary; ctx.lineWidth = 1.4; ctx.beginPath(); let previousY: number | null = null; for (let px = 0; px <= Math.round(plotW); px++) { const theta1 = xLower + px / plotW * TAU; const cosineTheta2 = 3 - 2 * Math.cos(theta1) - orbit.metadata.energy; if (cosineTheta2 < -1 || cosineTheta2 > 1) { previousY = null; continue; } const principal = Math.acos(cosineTheta2); const theta2 = upperBranch ? principal : TAU - principal; const screenY = y(theta2); if (previousY === null || Math.abs(screenY - previousY) > plotH * .5) ctx.moveTo(margin.left + px, screenY); else ctx.lineTo(margin.left + px, screenY); previousY = screenY; } ctx.stroke(); };
+      drawBoundary(true); drawBoundary(false);
+    }
+
     const marker = { x: x(state.theta1), y: y(state.theta2) };
-    ctx.fillStyle = "#fffdfa"; ctx.strokeStyle = "#d35e35"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(marker.x, marker.y, 6.5, 0, TAU); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#657086"; ctx.font = "11px monospace"; ctx.textAlign = "center";
-    xTicks.forEach((label, i) => ctx.fillText(label, margin.left + plotW * i / 2, height - 17));
+    ctx.fillStyle = colors.pendulum2Glow; ctx.beginPath(); ctx.arc(marker.x, marker.y, 12, 0, TAU); ctx.fill();
+    ctx.fillStyle = colors.pendulum2; ctx.strokeStyle = colors.foreground; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(marker.x, marker.y, 6.5, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = colors.muted; ctx.font = "11px monospace"; ctx.textAlign = "center";
+    xTicks.forEach((label, i) => ctx.fillText(label, margin.left + plotW * i / 4, height - 17));
     ctx.textAlign = "right";
-    yTicks.forEach((label, i) => ctx.fillText(label, margin.left - 9, margin.top + plotH * i / 2 + 4));
+    yTicks.forEach((label, i) => ctx.fillText(label, margin.left - 9, margin.top + plotH * i / 4 + 4));
     ctx.save(); ctx.translate(15, margin.top + plotH / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = "center"; ctx.fillText("θ₂ (mod 2π)", 0, 0); ctx.restore();
     ctx.textAlign = "center";
     ctx.fillText("θ₁ (mod 2π)", margin.left + plotW / 2, height - 2);
-  }, [orbit, state.theta1, state.theta2]);
+    if (orbit.metadata.energy < 6) { const label = `Forbidden: V > E = ${orbit.metadata.energy.toFixed(3)}`; ctx.font = "bold 10px monospace"; ctx.textAlign = "left"; const labelWidth = ctx.measureText(label).width + 16; ctx.fillStyle = colors.background; ctx.fillRect(margin.left + 8, margin.top + plotH - 27, labelWidth, 20); ctx.strokeStyle = colors.grid; ctx.strokeRect(margin.left + 8, margin.top + plotH - 27, labelWidth, 20); ctx.fillStyle = colors.forbiddenBoundary; ctx.fillText(label, margin.left + 16, margin.top + plotH - 13); }
+  }, [orbit, phase, state.theta1, state.theta2, theme]);
   return <canvas ref={ref} aria-label="Configuration-space orbit with current-state marker" role="img" />;
 }
 
@@ -129,8 +197,19 @@ export function OrbitViewer() {
   const [phase, setPhase] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
+  const [theme, setTheme] = useState<ThemeMode>("dark");
   const [error, setError] = useState("");
   const lastFrame = useRef<number | null>(null);
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem("orbit-viewer-theme");
+    if (savedTheme === "light" || savedTheme === "dark") setTheme(savedTheme);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem("orbit-viewer-theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     fetch("/data/manifest.json").then((response) => {
@@ -185,13 +264,13 @@ export function OrbitViewer() {
   };
   return (
     <main className="site-shell">
-      <header className="masthead"><div className="masthead-inner"><div className="identity"><div className="monogram">LO</div><div className="identity-copy">Double Pendulum <span>Supplementary Material</span></div></div><div className="masthead-note">precomputed trajectories · schema v1</div></div></header>
+      <header className="masthead"><div className="masthead-inner"><div className="identity"><div className="monogram">LO</div><div className="identity-copy">Double Pendulum <span>Supplementary Material</span></div></div><div className="masthead-actions"><div className="masthead-note">precomputed trajectories · schema v1</div><button className="theme-toggle" type="button" aria-pressed={theme === "dark"} onClick={() => setTheme((value) => value === "dark" ? "light" : "dark")}><span aria-hidden="true">{theme === "dark" ? "☼" : "◐"}</span>{theme === "dark" ? "Light mode" : "Dark mode"}</button></div></div></header>
       <div className="content">
         <section className="hero"><div><p className="eyebrow">Interactive scientific viewer</p><h1>Lyapunov<br />Orbit Atlas</h1></div><div className="hero-note"><strong>Explore periodic motion near a saddle.</strong><br />Every curve shown here is loaded from a stored trajectory. The browser synchronizes and renders the data; it does not solve the dynamics.</div></section>
         <section className="viewer" aria-label="Lyapunov orbit viewer">
           <div className="viewer-toolbar"><div className="selector-wrap"><label className="field-label" htmlFor="family-select">Family</label><select id="family-select" value={selectedFamilyId} onChange={(event) => chooseFamily(event.target.value)} disabled={!manifest}>{manifest?.families.map((family) => <option key={family.id} value={family.id}>{family.label}</option>)}</select><label className="field-label" htmlFor="orbit-select">Energy</label><select id="orbit-select" value={selectedId} onChange={(event) => setSelectedId(event.target.value)} disabled={!manifest}>{familyOrbits.map((item) => <option key={item.id} value={item.id}>E = {item.energy.toFixed(3)}</option>)}</select></div><div className="readout"><strong>{selectedFamily?.orbit_count ?? 0}</strong> computed orbits</div></div>
           {error ? <div className="error" role="alert">{error}</div> : !orbit ? <div className="loading" role="status">Loading trajectory…</div> : <>
-            <div className="visual-grid"><article className="panel"><div className="panel-heading"><h2>Physical pendulum</h2><span>interpolated state</span></div><div className="canvas-wrap"><PendulumCanvas orbit={orbit} phase={phase} /></div></article><article className="panel"><div className="panel-heading"><h2>Configuration space</h2><span>complete γ<sub>E</sub></span></div><div className="canvas-wrap"><ConfigurationCanvas orbit={orbit} phase={phase} /></div></article></div>
+            <div className="visual-grid"><article className="panel"><div className="panel-heading"><h2>Physical pendulum</h2><span>interpolated state</span></div><div className="canvas-wrap"><PendulumCanvas orbit={orbit} phase={phase} theme={theme} /></div></article><article className="panel"><div className="panel-heading"><h2>Configuration space</h2><span>V(θ<sub>1</sub>, θ<sub>2</sub>) ≤ E</span></div><div className="canvas-wrap"><ConfigurationCanvas orbit={orbit} phase={phase} theme={theme} /></div></article></div>
             <div className="transport"><button className="primary" type="button" onClick={() => setPlaying((value) => !value)} aria-label={playing ? "Pause orbit" : "Play orbit"}>{playing ? "Pause" : "Play"}</button><input className="phase-slider" type="range" min="0" max="1" step="0.0005" value={phase} aria-label="Normalized orbit phase" onChange={(event) => { setPlaying(false); setPhase(Number(event.target.value)); }} /><span className="phase-label">t/T = {phase.toFixed(3)}</span><select className="speed-select" aria-label="Playback speed" value={speed} onChange={(event) => setSpeed(Number(event.target.value))}>{[.25, .5, 1, 2].map((value) => <option key={value} value={value}>{value}×</option>)}</select><button type="button" onClick={() => { setPlaying(false); setPhase(0); }}>Restart</button></div>
             <dl className="data-strip"><div className="datum"><dt>Energy</dt><dd>{orbit.metadata.energy.toFixed(3)}</dd></div><div className="datum"><dt>Period</dt><dd>{orbit.metadata.period.toFixed(4)}</dd></div><div className="datum"><dt>Family</dt><dd>{orbit.metadata.family_id}</dd></div><div className="datum"><dt>Samples</dt><dd>{orbit.metadata.sample_count}</dd></div><div className="datum"><dt>Periodic residual</dt><dd>{orbit.validation?.periodic_residual.toExponential(2) ?? "—"}</dd></div></dl>
           </>}
