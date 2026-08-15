@@ -6,9 +6,9 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Lyapunov Orbit Viewer",
+  title: "Saddle Orbit For the Egalitarian Double Pendulum",
   description:
-    "Scientific viewer for precomputed double-pendulum Lyapunov periodic orbits.",
+    "Scientific viewer for precomputed saddle orbits of the egalitarian double pendulum.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

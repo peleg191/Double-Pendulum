@@ -10,7 +10,6 @@ type OrbitData = {
   metadata: { energy: number; period: number; family_id: string; sample_count: number; data_status?: string };
   parameters: { m1?: number; m2?: number; l1?: number; l2?: number; g?: number };
   trajectory: { t: number[]; theta1: number[]; theta2: number[]; p1?: number[]; p2?: number[] };
-  validation?: { periodic_residual: number };
 };
 type ThemeMode = "light" | "dark";
 type CanvasPalette = {
@@ -122,6 +121,66 @@ function PendulumCanvas({ orbit, phase, theme }: { orbit: OrbitData; phase: numb
     ctx.fillStyle = colors.foreground; ctx.beginPath(); ctx.arc(origin.x, origin.y, 4, 0, TAU); ctx.fill();
   }, [orbit, phase, state.theta1, state.theta2, theme]);
   return <canvas ref={ref} aria-label="Animated physical double pendulum" role="img" />;
+}
+
+function SystemSchematic({ theme }: { theme: ThemeMode }) {
+  const ref = useCanvas((ctx, width, height) => {
+    const colors = canvasPalette(theme);
+    ctx.fillStyle = colors.background;
+    ctx.fillRect(0, 0, width, height);
+
+    const scale = Math.min(width, height);
+    const origin = { x: width * .48, y: height * .16 };
+    const rodLength = scale * .29;
+    const theta1 = .48;
+    const theta2 = -.66;
+    const p1 = { x: origin.x + rodLength * Math.sin(theta1), y: origin.y + rodLength * Math.cos(theta1) };
+    const p2 = { x: p1.x + rodLength * Math.sin(theta2), y: p1.y + rodLength * Math.cos(theta2) };
+
+    ctx.strokeStyle = colors.guide;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 6]);
+    ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(origin.x, origin.y + rodLength * .82); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p1.x, p1.y + rodLength * .76); ctx.stroke();
+    ctx.setLineDash([]);
+
+    const drawAngle = (center: { x: number; y: number }, angle: number, radius: number, label: string) => {
+      ctx.strokeStyle = colors.muted; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(center.x, center.y, radius, Math.PI / 2 - angle, Math.PI / 2, angle > 0); ctx.stroke();
+      ctx.fillStyle = colors.muted; ctx.font = `italic ${Math.max(12, scale * .035)}px serif`; ctx.textAlign = "center";
+      ctx.fillText(label, center.x + Math.sin(angle / 2) * radius * 1.45, center.y + Math.cos(angle / 2) * radius * 1.45);
+    };
+    drawAngle(origin, theta1, scale * .09, "θ₁");
+    drawAngle(p1, theta2, scale * .08, "θ₂");
+
+    ctx.lineCap = "round";
+    ctx.strokeStyle = colors.pendulum1Glow; ctx.lineWidth = 11; ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+    ctx.strokeStyle = colors.pendulum2Glow; ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    ctx.strokeStyle = colors.pendulum1; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+    ctx.strokeStyle = colors.pendulum2; ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+
+    const drawMass = (point: { x: number; y: number }, radius: number, fill: string, label: string) => {
+      ctx.fillStyle = fill; ctx.strokeStyle = colors.foreground; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(point.x, point.y, radius, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = colors.foreground; ctx.font = `600 ${Math.max(11, scale * .031)}px monospace`; ctx.textAlign = "left";
+      ctx.fillText(label, point.x + radius + 9, point.y + 4);
+    };
+    drawMass(p1, scale * .026, colors.pendulum1, "m₁ = 1");
+    drawMass(p2, scale * .031, colors.pendulum2, "m₂ = 1");
+    ctx.fillStyle = colors.foreground; ctx.beginPath(); ctx.arc(origin.x, origin.y, scale * .012, 0, TAU); ctx.fill();
+
+    ctx.fillStyle = colors.muted; ctx.font = `${Math.max(11, scale * .029)}px monospace`; ctx.textAlign = "center";
+    ctx.fillText("L₁ = 1", (origin.x + p1.x) / 2 - 24, (origin.y + p1.y) / 2);
+    ctx.fillText("L₂ = 1", (p1.x + p2.x) / 2 + 26, (p1.y + p2.y) / 2);
+
+    const gx = width * .13, gy = height * .25, arrowLength = scale * .18;
+    ctx.strokeStyle = colors.pendulum2; ctx.fillStyle = colors.pendulum2; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx, gy + arrowLength); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(gx, gy + arrowLength); ctx.lineTo(gx - 6, gy + arrowLength - 10); ctx.lineTo(gx + 6, gy + arrowLength - 10); ctx.closePath(); ctx.fill();
+    ctx.font = `600 ${Math.max(11, scale * .03)}px monospace`; ctx.textAlign = "left";
+    ctx.fillText("g = 1", gx + 12, gy + arrowLength * .58);
+  }, [theme]);
+  return <canvas ref={ref} aria-label="Double pendulum system schematic with unit lengths, masses, and gravity" role="img" />;
 }
 
 function ConfigurationCanvas({ orbit, phase, theme }: { orbit: OrbitData; phase: number; theme: ThemeMode }) {
@@ -266,13 +325,17 @@ export function OrbitViewer() {
     <main className="site-shell">
       <header className="masthead"><div className="masthead-inner"><div className="identity"><div className="monogram">LO</div><div className="identity-copy">Double Pendulum <span>Supplementary Material</span></div></div><div className="masthead-actions"><div className="masthead-note">precomputed trajectories · schema v1</div><button className="theme-toggle" type="button" aria-pressed={theme === "dark"} onClick={() => setTheme((value) => value === "dark" ? "light" : "dark")}><span aria-hidden="true">{theme === "dark" ? "☼" : "◐"}</span>{theme === "dark" ? "Light mode" : "Dark mode"}</button></div></div></header>
       <div className="content">
-        <section className="hero"><div><p className="eyebrow">Interactive scientific viewer</p><h1>Lyapunov<br />Orbit Atlas</h1></div><div className="hero-note"><strong>Explore periodic motion near a saddle.</strong><br />Every curve shown here is loaded from a stored trajectory. The browser synchronizes and renders the data; it does not solve the dynamics.</div></section>
+        <section className="hero"><div><p className="eyebrow">Interactive scientific viewer</p><h1>Saddle Orbit For the Egalitarian Double Pendulum</h1></div><div className="hero-note"><strong>Explore periodic motion near a saddle.</strong><br />Every curve shown here is loaded from a stored trajectory. The browser synchronizes and renders the data; it does not solve the dynamics.</div></section>
+        <section className="system-definition" aria-labelledby="system-heading">
+          <div className="system-diagram"><SystemSchematic theme={theme} /></div>
+          <div className="system-copy"><p className="eyebrow">Mechanical model</p><h2 id="system-heading">Egalitarian double pendulum</h2><p>Both links and both point masses are identical. Angles are measured from the downward vertical, and the dimensionless gravitational acceleration is fixed at unity.</p><dl className="parameter-grid"><div><dt>L<sub>1</sub></dt><dd>1</dd></div><div><dt>L<sub>2</sub></dt><dd>1</dd></div><div><dt>m<sub>1</sub></dt><dd>1</dd></div><div><dt>m<sub>2</sub></dt><dd>1</dd></div><div><dt>g</dt><dd>1</dd></div></dl></div>
+        </section>
         <section className="viewer" aria-label="Lyapunov orbit viewer">
           <div className="viewer-toolbar"><div className="selector-wrap"><label className="field-label" htmlFor="family-select">Family</label><select id="family-select" value={selectedFamilyId} onChange={(event) => chooseFamily(event.target.value)} disabled={!manifest}>{manifest?.families.map((family) => <option key={family.id} value={family.id}>{family.label}</option>)}</select><label className="field-label" htmlFor="orbit-select">Energy</label><select id="orbit-select" value={selectedId} onChange={(event) => setSelectedId(event.target.value)} disabled={!manifest}>{familyOrbits.map((item) => <option key={item.id} value={item.id}>E = {item.energy.toFixed(3)}</option>)}</select></div><div className="readout"><strong>{selectedFamily?.orbit_count ?? 0}</strong> computed orbits</div></div>
           {error ? <div className="error" role="alert">{error}</div> : !orbit ? <div className="loading" role="status">Loading trajectory…</div> : <>
             <div className="visual-grid"><article className="panel"><div className="panel-heading"><h2>Physical pendulum</h2><span>interpolated state</span></div><div className="canvas-wrap"><PendulumCanvas orbit={orbit} phase={phase} theme={theme} /></div></article><article className="panel"><div className="panel-heading"><h2>Configuration space</h2><span>V(θ<sub>1</sub>, θ<sub>2</sub>) ≤ E</span></div><div className="canvas-wrap"><ConfigurationCanvas orbit={orbit} phase={phase} theme={theme} /></div></article></div>
             <div className="transport"><button className="primary" type="button" onClick={() => setPlaying((value) => !value)} aria-label={playing ? "Pause orbit" : "Play orbit"}>{playing ? "Pause" : "Play"}</button><input className="phase-slider" type="range" min="0" max="1" step="0.0005" value={phase} aria-label="Normalized orbit phase" onChange={(event) => { setPlaying(false); setPhase(Number(event.target.value)); }} /><span className="phase-label">t/T = {phase.toFixed(3)}</span><select className="speed-select" aria-label="Playback speed" value={speed} onChange={(event) => setSpeed(Number(event.target.value))}>{[.25, .5, 1, 2].map((value) => <option key={value} value={value}>{value}×</option>)}</select><button type="button" onClick={() => { setPlaying(false); setPhase(0); }}>Restart</button></div>
-            <dl className="data-strip"><div className="datum"><dt>Energy</dt><dd>{orbit.metadata.energy.toFixed(3)}</dd></div><div className="datum"><dt>Period</dt><dd>{orbit.metadata.period.toFixed(4)}</dd></div><div className="datum"><dt>Family</dt><dd>{orbit.metadata.family_id}</dd></div><div className="datum"><dt>Samples</dt><dd>{orbit.metadata.sample_count}</dd></div><div className="datum"><dt>Periodic residual</dt><dd>{orbit.validation?.periodic_residual.toExponential(2) ?? "—"}</dd></div></dl>
+            <dl className="data-strip"><div className="datum"><dt>Energy</dt><dd>{orbit.metadata.energy.toFixed(3)}</dd></div><div className="datum"><dt>Period</dt><dd>{orbit.metadata.period.toFixed(4)}</dd></div><div className="datum"><dt>Family</dt><dd>{orbit.metadata.family_id}</dd></div><div className="datum"><dt>Samples</dt><dd>{orbit.metadata.sample_count}</dd></div></dl>
           </>}
         </section>
         <section className="method-note"><div><h2>Coordinate convention</h2><p>Angles are measured from the downward vertical. {selectedFamilyId === "saddle_E4" ? <>For this family, θ<sub>1</sub> ∈ [0, 2π] and θ<sub>2</sub> ∈ [−π, π].</> : <>For this family, θ<sub>1</sub> ∈ [−π, π] and θ<sub>2</sub> ∈ [0, 2π].</>} Paths are broken where they cross a plotted torus boundary.</p></div><div><h2>Numerical provenance</h2><p>MATLAB-generated <code>.mat</code> trajectories are the authoritative research data. A preprocessing step validates them and exports the web representation discovered through the manifest.</p>{record?.mat && <p><a href={`/${record.mat}`}>Download source MAT</a></p>}</div></section>

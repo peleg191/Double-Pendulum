@@ -90,28 +90,18 @@ for index = 1:numel(optional)
     end
 end
 
-closure = [angleDifference(theta1(end), theta1(1)); ...
-    angleDifference(theta2(end), theta2(1))];
-if isfield(trajectory, 'p1') && isfield(trajectory, 'p2')
-    closure = [closure; trajectory.p1(end) - trajectory.p1(1); ...
-        trajectory.p2(end) - trajectory.p2(1)];
-end
 metadata = struct('energy', double(raw.E), 'period', double(raw.T), ...
     'family_id', family.id, 'saddle_energy', family.saddleEnergy, ...
     'sample_count', sampleCount, 'source_file', sourceFile);
 parameters = struct();
 if isfield(raw, 'g'), parameters.g = double(raw.g); end
-validation = struct('periodic_residual', norm(closure), ...
-    'time_start_residual', abs(t(1)), ...
+validation = struct('time_start_residual', abs(t(1)), ...
     'period_endpoint_residual', abs(t(end) - double(raw.T)));
 orbit = struct('schema_version', 1, 'metadata', metadata, ...
     'parameters', parameters, 'trajectory', trajectory, ...
     'validation', validation);
 end
 
-function result = angleDifference(a, b)
-result = atan2(sin(a - b), cos(a - b));
-end
 function values = column(values)
 values = double(values(:));
 end

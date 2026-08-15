@@ -15,8 +15,9 @@ test("server-renders the scientific viewer", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /<title>Lyapunov Orbit Viewer<\/title>/i);
-  assert.match(html, /Lyapunov/);
+  assert.match(html, /<title>Saddle Orbit For the Egalitarian Double Pendulum<\/title>/i);
+  assert.match(html, /Egalitarian Double Pendulum/);
+  assert.doesNotMatch(html, /Periodic residual/i);
   assert.match(html, /Coordinate convention/);
   assert.match(html, /Loading trajectory/);
   assert.match(html, /Computed orbit|Family/);
