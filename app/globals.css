@@ -72,7 +72,10 @@ h1 { margin: 0; max-width: 850px; font-size: clamp(42px, 6.5vw, 88px); line-heig
 .viewer-toolbar { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 28px; padding: 18px 22px; border-bottom: 1px solid var(--line); }
 .selector-wrap { display: flex; align-items: center; gap: 14px; min-width: 0; flex-wrap: wrap; }
 .field-label { font: 600 11px var(--font-geist-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-select { border: 0; border-bottom: 1px solid var(--control-border); color: var(--ink); background: transparent; padding: 7px 30px 7px 2px; font-weight: 560; }
+select { border: 1px solid var(--control-border); color: var(--ink); background-color: var(--control); padding: 7px 30px 7px 9px; font-weight: 560; }
+select option { color: var(--ink); background-color: var(--control); }
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] select option { color-scheme: dark; background-color: #0c0d14; color: #ebefff; }
 .readout { font: 12px var(--font-geist-mono); color: var(--muted); white-space: nowrap; }
 .readout strong { color: var(--ink); font-weight: 600; }
 
@@ -82,7 +85,7 @@ select { border: 0; border-bottom: 1px solid var(--control-border); color: var(-
 .panel-heading { display: flex; justify-content: space-between; align-items: baseline; padding: 18px 22px 0; }
 .panel-heading h2 { margin: 0; font-size: 15px; font-weight: 620; letter-spacing: -.01em; }
 .panel-heading span { color: var(--muted); font: 11px var(--font-geist-mono); }
-.canvas-wrap { position: relative; aspect-ratio: 1.45; min-height: 330px; background: var(--panel); }
+.canvas-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; min-height: 0; background: var(--panel); }
 canvas { display: block; width: 100%; height: 100%; }
 
 .transport { display: grid; grid-template-columns: auto minmax(160px, 1fr) auto auto; gap: 18px; align-items: center; padding: 18px 22px; border-top: 1px solid var(--line); background: var(--transport); }
@@ -125,7 +128,7 @@ canvas { display: block; width: 100%; height: 100%; }
   .phase-slider { grid-column: 1 / -1; grid-row: 2; }
   .phase-label { text-align: left; }
   .method-note { grid-template-columns: 1fr; gap: 24px; }
-  .canvas-wrap { min-height: 260px; }
+  .canvas-wrap { min-height: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
