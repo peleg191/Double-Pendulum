@@ -1,0 +1,36 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+async function render() {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  return worker.fetch(new Request("http://localhost/", { headers: { accept: "text/html" } }), {
+    ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
+  }, { waitUntil() {}, passThroughOnException() {} });
+}
+
+test("server-renders the scientific viewer", async () => {
+  const response = await render();
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /<title>Lyapunov Orbit Viewer<\/title>/i);
+  assert.match(html, /Lyapunov/);
+  assert.match(html, /Coordinate convention/);
+  assert.match(html, /Loading trajectory/);
+  assert.match(html, /Demonstration dataset/);
+  assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
+});
+
+test("bundled orbit obeys the documented structural contract", async () => {
+  const data = JSON.parse(await readFile(new URL("../public/data/orbit_E_2p35_demo.json", import.meta.url), "utf8"));
+  assert.equal(data.schema_version, 1);
+  const { t, theta1, theta2 } = data.trajectory;
+  assert.equal(t.length, data.metadata.sample_count);
+  assert.equal(theta1.length, t.length);
+  assert.equal(theta2.length, t.length);
+  assert.ok(t.every((value, index) => index === 0 || value > t[index - 1]));
+  assert.equal(t.at(0), 0);
+  assert.equal(t.at(-1), data.metadata.period);
+});
