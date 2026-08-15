@@ -170,8 +170,8 @@ function SystemSchematic({ theme }: { theme: ThemeMode }) {
     ctx.fillStyle = colors.foreground; ctx.beginPath(); ctx.arc(origin.x, origin.y, scale * .012, 0, TAU); ctx.fill();
 
     ctx.fillStyle = colors.muted; ctx.font = `${Math.max(11, scale * .029)}px monospace`; ctx.textAlign = "center";
-    ctx.fillText("L₁ = 1", (origin.x + p1.x) / 2 - 24, (origin.y + p1.y) / 2);
-    ctx.fillText("L₂ = 1", (p1.x + p2.x) / 2 + 26, (p1.y + p2.y) / 2);
+    ctx.fillText("L₁ = 1", (origin.x + p1.x) / 2 - 46, (origin.y + p1.y) / 2);
+    ctx.fillText("L₂ = 1", (p1.x + p2.x) / 2 - 48, (p1.y + p2.y) / 2);
 
     const gx = width * .13, gy = height * .25, arrowLength = scale * .18;
     ctx.strokeStyle = colors.pendulum2; ctx.fillStyle = colors.pendulum2; ctx.lineWidth = 2;
