@@ -15,6 +15,7 @@ type OrbitData = {
 
 const TAU = Math.PI * 2;
 const wrapAngle = (angle: number) => ((angle + Math.PI) % TAU + TAU) % TAU - Math.PI;
+const wrapAnglePositive = (angle: number) => ((angle % TAU) + TAU) % TAU;
 
 function sampleOrbit(orbit: OrbitData, phase: number) {
   const { t, theta1, theta2 } = orbit.trajectory;
@@ -64,12 +65,14 @@ function PendulumCanvas({ orbit, phase }: { orbit: OrbitData; phase: number }) {
     ctx.clearRect(0, 0, width, height);
     const l1 = orbit.parameters.l1 ?? 1;
     const l2 = orbit.parameters.l2 ?? 1;
-    const scale = Math.min(width * 0.2, height * 0.32) / Math.max(l1, l2);
-    const origin = { x: width / 2, y: height * 0.2 };
+    const outerPadding = 24;
+    const availableDiameter = Math.max(1, Math.min(width, height) - outerPadding * 2);
+    const scale = availableDiameter / (2 * (l1 + l2));
+    const origin = { x: width / 2, y: height / 2 };
     const p1 = { x: origin.x + scale * l1 * Math.sin(state.theta1), y: origin.y + scale * l1 * Math.cos(state.theta1) };
     const p2 = { x: p1.x + scale * l2 * Math.sin(state.theta2), y: p1.y + scale * l2 * Math.cos(state.theta2) };
     ctx.strokeStyle = "#d9d6cf"; ctx.lineWidth = 1;
-    ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(origin.x, height - 24); ctx.stroke(); ctx.setLineDash([]);
+    ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(origin.x, outerPadding); ctx.lineTo(origin.x, height - outerPadding); ctx.stroke(); ctx.setLineDash([]);
     ctx.strokeStyle = "#16233a"; ctx.lineWidth = 5; ctx.lineCap = "round";
     ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
     ctx.fillStyle = "#101b2c"; ctx.beginPath(); ctx.arc(origin.x, origin.y, 6, 0, TAU); ctx.fill();
@@ -84,10 +87,17 @@ function ConfigurationCanvas({ orbit, phase }: { orbit: OrbitData; phase: number
   const state = sampleOrbit(orbit, phase);
   const ref = useCanvas((ctx, width, height) => {
     ctx.clearRect(0, 0, width, height);
-    const margin = { left: 54, right: 24, top: 22, bottom: 42 };
+    const isE2Family = orbit.metadata.family_id === "saddle_E2";
+    const wrapX = isE2Family ? wrapAngle : wrapAnglePositive;
+    const wrapY = isE2Family ? wrapAnglePositive : wrapAngle;
+    const normalizeX = (value: number) => isE2Family ? (wrapX(value) + Math.PI) / TAU : wrapX(value) / TAU;
+    const normalizeY = (value: number) => isE2Family ? wrapY(value) / TAU : (wrapY(value) + Math.PI) / TAU;
+    const xTicks = isE2Family ? ["−π", "0", "+π"] : ["0", "π", "2π"];
+    const yTicks = isE2Family ? ["2π", "π", "0"] : ["+π", "0", "−π"];
+    const margin = { left: 62, right: 24, top: 22, bottom: 42 };
     const plotW = width - margin.left - margin.right, plotH = height - margin.top - margin.bottom;
-    const x = (v: number) => margin.left + ((wrapAngle(v) + Math.PI) / TAU) * plotW;
-    const y = (v: number) => margin.top + (1 - (wrapAngle(v) + Math.PI) / TAU) * plotH;
+    const x = (value: number) => margin.left + normalizeX(value) * plotW;
+    const y = (value: number) => margin.top + (1 - normalizeY(value)) * plotH;
     ctx.strokeStyle = "#e3e0d9"; ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) { const gx = margin.left + plotW * i / 4; const gy = margin.top + plotH * i / 4; ctx.beginPath(); ctx.moveTo(gx, margin.top); ctx.lineTo(gx, margin.top + plotH); ctx.stroke(); ctx.beginPath(); ctx.moveTo(margin.left, gy); ctx.lineTo(margin.left + plotW, gy); ctx.stroke(); }
     ctx.strokeStyle = "#16233a"; ctx.lineWidth = 1.5; ctx.strokeRect(margin.left, margin.top, plotW, plotH);
@@ -101,8 +111,11 @@ function ConfigurationCanvas({ orbit, phase }: { orbit: OrbitData; phase: number
     const marker = { x: x(state.theta1), y: y(state.theta2) };
     ctx.fillStyle = "#fffdfa"; ctx.strokeStyle = "#d35e35"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(marker.x, marker.y, 6.5, 0, TAU); ctx.fill(); ctx.stroke();
     ctx.fillStyle = "#657086"; ctx.font = "11px monospace"; ctx.textAlign = "center";
-    ["−π", "0", "+π"].forEach((label, i) => ctx.fillText(label, margin.left + plotW * i / 2, height - 17));
-    ctx.save(); ctx.translate(16, margin.top + plotH / 2); ctx.rotate(-Math.PI / 2); ctx.fillText("θ₂ (mod 2π)", 0, 0); ctx.restore();
+    xTicks.forEach((label, i) => ctx.fillText(label, margin.left + plotW * i / 2, height - 17));
+    ctx.textAlign = "right";
+    yTicks.forEach((label, i) => ctx.fillText(label, margin.left - 9, margin.top + plotH * i / 2 + 4));
+    ctx.save(); ctx.translate(15, margin.top + plotH / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = "center"; ctx.fillText("θ₂ (mod 2π)", 0, 0); ctx.restore();
+    ctx.textAlign = "center";
     ctx.fillText("θ₁ (mod 2π)", margin.left + plotW / 2, height - 2);
   }, [orbit, state.theta1, state.theta2]);
   return <canvas ref={ref} aria-label="Configuration-space orbit with current-state marker" role="img" />;
@@ -183,7 +196,7 @@ export function OrbitViewer() {
             <dl className="data-strip"><div className="datum"><dt>Energy</dt><dd>{orbit.metadata.energy.toFixed(3)}</dd></div><div className="datum"><dt>Period</dt><dd>{orbit.metadata.period.toFixed(4)}</dd></div><div className="datum"><dt>Family</dt><dd>{orbit.metadata.family_id}</dd></div><div className="datum"><dt>Samples</dt><dd>{orbit.metadata.sample_count}</dd></div><div className="datum"><dt>Periodic residual</dt><dd>{orbit.validation?.periodic_residual.toExponential(2) ?? "—"}</dd></div></dl>
           </>}
         </section>
-        <section className="method-note"><div><h2>Coordinate convention</h2><p>Angles are measured from the downward vertical. The physical view uses continuous angles; configuration space wraps both coordinates to [−π, π] and breaks the path at torus boundaries.</p></div><div><h2>Numerical provenance</h2><p>MATLAB-generated <code>.mat</code> trajectories are the authoritative research data. A preprocessing step validates them and exports the web representation discovered through the manifest.</p>{record?.mat && <p><a href={`/${record.mat}`}>Download source MAT</a></p>}</div></section>
+        <section className="method-note"><div><h2>Coordinate convention</h2><p>Angles are measured from the downward vertical. {selectedFamilyId === "saddle_E4" ? <>For this family, θ<sub>1</sub> ∈ [0, 2π] and θ<sub>2</sub> ∈ [−π, π].</> : <>For this family, θ<sub>1</sub> ∈ [−π, π] and θ<sub>2</sub> ∈ [0, 2π].</>} Paths are broken where they cross a plotted torus boundary.</p></div><div><h2>Numerical provenance</h2><p>MATLAB-generated <code>.mat</code> trajectories are the authoritative research data. A preprocessing step validates them and exports the web representation discovered through the manifest.</p>{record?.mat && <p><a href={`/${record.mat}`}>Download source MAT</a></p>}</div></section>
       </div>
     </main>
   );
