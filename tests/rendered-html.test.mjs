@@ -19,12 +19,16 @@ test("server-renders the scientific viewer", async () => {
   assert.match(html, /Lyapunov/);
   assert.match(html, /Coordinate convention/);
   assert.match(html, /Loading trajectory/);
-  assert.match(html, /Demonstration dataset/);
+  assert.match(html, /Computed orbit|Family/);
+  assert.doesNotMatch(html, /Demonstration dataset/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 
-test("bundled orbit obeys the documented structural contract", async () => {
-  const data = JSON.parse(await readFile(new URL("../public/data/orbit_E_2p35_demo.json", import.meta.url), "utf8"));
+test("exported orbit obeys the documented structural contract", async () => {
+  const manifest = JSON.parse(await readFile(new URL("../public/data/manifest.json", import.meta.url), "utf8"));
+  assert.equal(manifest.families.length, 2);
+  assert.equal(manifest.orbits.length, 108);
+  const data = JSON.parse(await readFile(new URL(`../public/${manifest.orbits[0].trajectory}`, import.meta.url), "utf8"));
   assert.equal(data.schema_version, 1);
   const { t, theta1, theta2 } = data.trajectory;
   assert.equal(t.length, data.metadata.sample_count);
@@ -32,5 +36,5 @@ test("bundled orbit obeys the documented structural contract", async () => {
   assert.equal(theta2.length, t.length);
   assert.ok(t.every((value, index) => index === 0 || value > t[index - 1]));
   assert.equal(t.at(0), 0);
-  assert.equal(t.at(-1), data.metadata.period);
+  assert.ok(Math.abs(t.at(-1) - data.metadata.period) < 1e-12);
 });

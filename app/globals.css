@@ -37,11 +37,9 @@ h1 { margin: 0; max-width: 850px; font-size: clamp(42px, 6.5vw, 88px); line-heig
 .hero-note { border-left: 2px solid var(--accent); padding-left: 22px; color: var(--muted); line-height: 1.6; font-size: 15px; }
 .hero-note strong { color: var(--ink); font-weight: 600; }
 
-.demo-banner { display: flex; justify-content: space-between; gap: 18px; align-items: center; border: 1px solid #deb9a9; background: #fff8f3; padding: 12px 15px; margin-bottom: 18px; font-size: 13px; color: #70402d; }
-.demo-banner b { font: 650 11px var(--font-geist-mono); letter-spacing: .09em; text-transform: uppercase; }
 .viewer { border: 1px solid var(--line); background: var(--panel); box-shadow: 0 26px 70px #17223a13; }
 .viewer-toolbar { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 28px; padding: 18px 22px; border-bottom: 1px solid var(--line); }
-.selector-wrap { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.selector-wrap { display: flex; align-items: center; gap: 14px; min-width: 0; flex-wrap: wrap; }
 .field-label { font: 600 11px var(--font-geist-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 select { border: 0; border-bottom: 1px solid #9fa6b1; color: var(--ink); background: transparent; padding: 7px 30px 7px 2px; font-weight: 560; }
 .readout { font: 12px var(--font-geist-mono); color: var(--muted); white-space: nowrap; }

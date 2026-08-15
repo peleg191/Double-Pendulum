@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type OrbitRecord = { id: string; energy: number; period: number; family_id: string; trajectory: string; mat?: string; video?: string };
-type Manifest = { schema_version: number; orbits: OrbitRecord[] };
+type FamilyRecord = { id: string; label: string; saddle_energy: number; orbit_count: number };
+type Manifest = { schema_version: number; generated_at?: string; families: FamilyRecord[]; orbits: OrbitRecord[] };
 type OrbitData = {
   schema_version: number;
   metadata: { energy: number; period: number; family_id: string; sample_count: number; data_status?: string };
-  parameters: { m1: number; m2: number; l1: number; l2: number; g: number };
+  parameters: { m1?: number; m2?: number; l1?: number; l2?: number; g?: number };
   trajectory: { t: number[]; theta1: number[]; theta2: number[]; p1?: number[]; p2?: number[] };
   validation?: { periodic_residual: number };
 };
@@ -61,10 +62,12 @@ function PendulumCanvas({ orbit, phase }: { orbit: OrbitData; phase: number }) {
   const state = sampleOrbit(orbit, phase);
   const ref = useCanvas((ctx, width, height) => {
     ctx.clearRect(0, 0, width, height);
-    const scale = Math.min(width * 0.2, height * 0.32) / Math.max(orbit.parameters.l1, orbit.parameters.l2);
+    const l1 = orbit.parameters.l1 ?? 1;
+    const l2 = orbit.parameters.l2 ?? 1;
+    const scale = Math.min(width * 0.2, height * 0.32) / Math.max(l1, l2);
     const origin = { x: width / 2, y: height * 0.2 };
-    const p1 = { x: origin.x + scale * orbit.parameters.l1 * Math.sin(state.theta1), y: origin.y + scale * orbit.parameters.l1 * Math.cos(state.theta1) };
-    const p2 = { x: p1.x + scale * orbit.parameters.l2 * Math.sin(state.theta2), y: p1.y + scale * orbit.parameters.l2 * Math.cos(state.theta2) };
+    const p1 = { x: origin.x + scale * l1 * Math.sin(state.theta1), y: origin.y + scale * l1 * Math.cos(state.theta1) };
+    const p2 = { x: p1.x + scale * l2 * Math.sin(state.theta2), y: p1.y + scale * l2 * Math.cos(state.theta2) };
     ctx.strokeStyle = "#d9d6cf"; ctx.lineWidth = 1;
     ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(origin.x, height - 24); ctx.stroke(); ctx.setLineDash([]);
     ctx.strokeStyle = "#16233a"; ctx.lineWidth = 5; ctx.lineCap = "round";
@@ -108,6 +111,7 @@ function ConfigurationCanvas({ orbit, phase }: { orbit: OrbitData; phase: number
 export function OrbitViewer() {
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [orbit, setOrbit] = useState<OrbitData | null>(null);
+  const [selectedFamilyId, setSelectedFamilyId] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [phase, setPhase] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -123,7 +127,9 @@ export function OrbitViewer() {
       if (data.schema_version !== 1 || !data.orbits.length) throw new Error("Unsupported or empty manifest");
       setManifest(data);
       const requested = new URLSearchParams(window.location.search).get("orbit");
-      setSelectedId(data.orbits.some((item) => item.id === requested) ? requested! : data.orbits[0].id);
+      const initialOrbit = data.orbits.find((item) => item.id === requested) ?? data.orbits[0];
+      setSelectedFamilyId(initialOrbit.family_id);
+      setSelectedId(initialOrbit.id);
     }).catch(() => setError("Orbit data could not be loaded."));
   }, []);
 
@@ -157,14 +163,20 @@ export function OrbitViewer() {
   }, [playing, tick]);
 
   const record = useMemo(() => manifest?.orbits.find((item) => item.id === selectedId), [manifest, selectedId]);
+  const familyOrbits = useMemo(() => manifest?.orbits.filter((item) => item.family_id === selectedFamilyId) ?? [], [manifest, selectedFamilyId]);
+  const selectedFamily = useMemo(() => manifest?.families.find((item) => item.id === selectedFamilyId), [manifest, selectedFamilyId]);
+  const chooseFamily = (familyId: string) => {
+    setSelectedFamilyId(familyId);
+    const firstOrbit = manifest?.orbits.find((item) => item.family_id === familyId);
+    if (firstOrbit) setSelectedId(firstOrbit.id);
+  };
   return (
     <main className="site-shell">
       <header className="masthead"><div className="masthead-inner"><div className="identity"><div className="monogram">LO</div><div className="identity-copy">Double Pendulum <span>Supplementary Material</span></div></div><div className="masthead-note">precomputed trajectories · schema v1</div></div></header>
       <div className="content">
         <section className="hero"><div><p className="eyebrow">Interactive scientific viewer</p><h1>Lyapunov<br />Orbit Atlas</h1></div><div className="hero-note"><strong>Explore periodic motion near a saddle.</strong><br />Every curve shown here is loaded from a stored trajectory. The browser synchronizes and renders the data; it does not solve the dynamics.</div></section>
-        <div className="demo-banner"><b>Demonstration dataset</b><span>Interface validation only — replace with trajectories exported from MATLAB before publication.</span></div>
         <section className="viewer" aria-label="Lyapunov orbit viewer">
-          <div className="viewer-toolbar"><div className="selector-wrap"><label className="field-label" htmlFor="orbit-select">Computed orbit</label><select id="orbit-select" value={selectedId} onChange={(event) => setSelectedId(event.target.value)} disabled={!manifest}>{manifest?.orbits.map((item) => <option key={item.id} value={item.id}>E = {item.energy.toFixed(2)} · {item.family_id}</option>)}</select></div><div className="readout">orbit <strong>{selectedId || "—"}</strong></div></div>
+          <div className="viewer-toolbar"><div className="selector-wrap"><label className="field-label" htmlFor="family-select">Family</label><select id="family-select" value={selectedFamilyId} onChange={(event) => chooseFamily(event.target.value)} disabled={!manifest}>{manifest?.families.map((family) => <option key={family.id} value={family.id}>{family.label}</option>)}</select><label className="field-label" htmlFor="orbit-select">Energy</label><select id="orbit-select" value={selectedId} onChange={(event) => setSelectedId(event.target.value)} disabled={!manifest}>{familyOrbits.map((item) => <option key={item.id} value={item.id}>E = {item.energy.toFixed(3)}</option>)}</select></div><div className="readout"><strong>{selectedFamily?.orbit_count ?? 0}</strong> computed orbits</div></div>
           {error ? <div className="error" role="alert">{error}</div> : !orbit ? <div className="loading" role="status">Loading trajectory…</div> : <>
             <div className="visual-grid"><article className="panel"><div className="panel-heading"><h2>Physical pendulum</h2><span>interpolated state</span></div><div className="canvas-wrap"><PendulumCanvas orbit={orbit} phase={phase} /></div></article><article className="panel"><div className="panel-heading"><h2>Configuration space</h2><span>complete γ<sub>E</sub></span></div><div className="canvas-wrap"><ConfigurationCanvas orbit={orbit} phase={phase} /></div></article></div>
             <div className="transport"><button className="primary" type="button" onClick={() => setPlaying((value) => !value)} aria-label={playing ? "Pause orbit" : "Play orbit"}>{playing ? "Pause" : "Play"}</button><input className="phase-slider" type="range" min="0" max="1" step="0.0005" value={phase} aria-label="Normalized orbit phase" onChange={(event) => { setPlaying(false); setPhase(Number(event.target.value)); }} /><span className="phase-label">t/T = {phase.toFixed(3)}</span><select className="speed-select" aria-label="Playback speed" value={speed} onChange={(event) => setSpeed(Number(event.target.value))}>{[.25, .5, 1, 2].map((value) => <option key={value} value={value}>{value}×</option>)}</select><button type="button" onClick={() => { setPlaying(false); setPhase(0); }}>Restart</button></div>

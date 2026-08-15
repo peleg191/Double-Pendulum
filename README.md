@@ -1,100 +1,41 @@
-# vinext-starter
+# Lyapunov Orbit Viewer
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+A static scientific viewer for precomputed double-pendulum Lyapunov periodic orbits. MATLAB `.mat` trajectories are the authoritative numerical results; the web application only loads, interpolates in time, and visualizes exported trajectories.
 
-## Prerequisites
+## Local development
 
-- Node.js `>=22.13.0`
-
-## Quick Start
-
-```bash
+```powershell
 npm install
 npm run dev
-npm run build
 ```
 
-This starter does not use `wrangler.jsonc`.
+Open `http://localhost:3000/`.
 
-## Included Shape
+## Data workflow
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+The repository contains two source families:
 
-## Workspace Auth Headers
+- `trajectories/` — family associated with the saddle at `E = 2`
+- `trajectories_E4_saddle/` — family associated with the saddle at `E = 4`
 
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
+Regenerate the browser data from MATLAB:
 
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```matlab
+cd matlab
+export_orbits_for_web
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+The exporter validates finite values, equal array lengths, strictly increasing time, period endpoints, and state closure with angular differences evaluated modulo `2π`. It writes one JSON file per orbit, copies the source MAT files into the download area, and regenerates `public/data/manifest.json`.
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+## Scientific boundary
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+The browser does not integrate the equations of motion, search for periodic orbits, parse MAT files, or interpolate between energy levels. Selecting an energy always selects one computed trajectory from the generated manifest.
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+## Main project areas
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
-
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Useful Commands
-
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+- `matlab/` — validation and web export
+- `trajectories*/` — authoritative research results
+- `public/data/` — generated browser trajectories and manifest
+- `public/mat/` — downloadable source MAT files
+- `app/` — viewer interface and synchronized renderers
+- `tests/` — page and data-contract checks
