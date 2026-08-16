@@ -17,6 +17,8 @@ test("server-renders the scientific viewer", async () => {
   const html = await response.text();
   assert.match(html, /<title>Saddle Orbit For the Egalitarian Double Pendulum<\/title>/i);
   assert.match(html, /Egalitarian Double Pendulum/);
+  assert.match(html, />DP<\/div>/i);
+  assert.doesNotMatch(html, /precomputed trajectories · schema v1/i);
   assert.doesNotMatch(html, /Periodic residual/i);
   assert.match(html, /Coordinate convention/);
   assert.match(html, /Loading trajectory/);
