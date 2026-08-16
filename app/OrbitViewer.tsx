@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-declare const __PAGES_BUILD__: boolean;
-
 type OrbitRecord = { id: string; energy: number; period: number; family_id: string; trajectory: string; mat?: string; video?: string };
 type FamilyRecord = { id: string; label: string; saddle_energy: number; orbit_count: number };
 type Manifest = { schema_version: number; generated_at?: string; families: FamilyRecord[]; orbits: OrbitRecord[] };
@@ -23,7 +21,6 @@ type CanvasPalette = {
 
 const TAU = Math.PI * 2;
 const formatEnergy = (value: number) => value.toFixed(6).replace(/\.?0+$/, "");
-const includeMatDownloads = typeof __PAGES_BUILD__ === "undefined" || !__PAGES_BUILD__;
 const assetUrl = (path: string) => new URL(path.replace(/^\/+/, ""), document.baseURI).toString();
 const wrapAngle = (angle: number) => ((angle + Math.PI) % TAU + TAU) % TAU - Math.PI;
 const wrapAnglePositive = (angle: number) => ((angle % TAU) + TAU) % TAU;
@@ -348,9 +345,9 @@ export function OrbitViewer() {
     <main className="site-shell">
       <header className="masthead"><div className="masthead-inner"><div className="identity"><div className="monogram">DP</div><div className="identity-copy">Double Pendulum <span>Supplementary Material</span></div></div><div className="masthead-actions"><button className="theme-toggle" type="button" aria-pressed={theme === "dark"} onClick={() => setTheme((value) => value === "dark" ? "light" : "dark")}><span aria-hidden="true">{theme === "dark" ? "☼" : "◐"}</span>{theme === "dark" ? "Light mode" : "Dark mode"}</button></div></div></header>
       <div className="content">
-        <section className="hero"><div><p className="eyebrow">Interactive scientific viewer</p><h1>Saddle Orbit For the Egalitarian Double Pendulum</h1></div><div className="hero-note"><strong>Explore periodic motion near a saddle.</strong><br />Every curve shown here is loaded from a stored trajectory. The browser synchronizes and renders the data; it does not solve the dynamics.</div></section>
+        <section className="hero"><div><p className="eyebrow">Interactive scientific viewer</p><h1>Saddle Orbit For the Egalitarian Double Pendulum</h1></div><div className="hero-note"><strong>Explore periodic motion near a saddle.</strong><br />Every curve shown here is loaded from a stored trajectory, precomputed by the shooting algorithm as a non linear continuation of the linear normal mode.</div></section>
         <aside className={`system-drawer${isSystemDrawerOpen ? " is-open" : ""}`} aria-labelledby="system-heading">
-          <div className="system-drawer-bar"><div><p className="eyebrow">Mechanical model</p><h2 id="system-heading">Egalitarian double pendulum</h2></div><button className="drawer-toggle" type="button" aria-expanded={isSystemDrawerOpen} aria-controls="system-drawer-content" onClick={() => setIsSystemDrawerOpen((value) => !value)}><span className="drawer-icon" aria-hidden="true">⌃</span>{isSystemDrawerOpen ? "Minimize" : "Expand"}</button></div>
+          <div className="system-drawer-bar"><div><p className="eyebrow">Physical model</p><h2 id="system-heading">Egalitarian double pendulum</h2></div><button className="drawer-toggle" type="button" aria-expanded={isSystemDrawerOpen} aria-controls="system-drawer-content" onClick={() => setIsSystemDrawerOpen((value) => !value)}><span className="drawer-icon" aria-hidden="true">⌃</span>{isSystemDrawerOpen ? "Minimize" : "Expand"}</button></div>
           <div className="system-drawer-reveal" aria-hidden={!isSystemDrawerOpen}><div className="system-drawer-content" id="system-drawer-content"><div className="system-diagram"><SystemSchematic theme={theme} /></div><div className="system-copy"><p>Both links and both point masses are identical. Angles are measured from the downward vertical, and the dimensionless gravitational acceleration is fixed at unity.</p><dl className="parameter-grid"><div><dt>L<sub>1</sub></dt><dd>1</dd></div><div><dt>L<sub>2</sub></dt><dd>1</dd></div><div><dt>m<sub>1</sub></dt><dd>1</dd></div><div><dt>m<sub>2</sub></dt><dd>1</dd></div><div><dt>g</dt><dd>1</dd></div></dl></div></div></div>
         </aside>
         <section className="viewer" aria-label="Lyapunov orbit viewer">
@@ -361,7 +358,7 @@ export function OrbitViewer() {
             <dl className="data-strip"><div className="datum"><dt>Energy</dt><dd>{formatEnergy(orbit.metadata.energy)}</dd></div><div className="datum"><dt>Period</dt><dd>{orbit.metadata.period.toFixed(4)}</dd></div><div className="datum"><dt>Family</dt><dd>{selectedFamily?.label ?? orbit.metadata.family_id}</dd></div><div className="datum"><dt>Samples</dt><dd>{orbit.metadata.sample_count}</dd></div></dl>
           </>}
         </section>
-        <section className="method-note"><div><h2>Coordinate convention</h2><p>Angles are measured from the downward vertical. {selectedFamilyId === "saddle_E4" ? <>For this family, θ<sub>1</sub> ∈ [0, 2π] and θ<sub>2</sub> ∈ [−π, π].</> : <>For this family, θ<sub>1</sub> ∈ [−π, π] and θ<sub>2</sub> ∈ [0, 2π].</>} Paths are broken where they cross a plotted torus boundary.</p></div><div><h2>Numerical provenance</h2><p>MATLAB-generated <code>.mat</code> trajectories are the authoritative research data. A preprocessing step validates them and exports the web representation discovered through the manifest.</p>{includeMatDownloads && record?.mat && <p><a href={assetUrl(record.mat)}>Download source MAT</a></p>}</div></section>
+        <section className="method-note" aria-labelledby="source-mat-heading"><div><h2 id="source-mat-heading">Source MAT file</h2>{record?.mat ? <p>The MATLAB file contains the authoritative precomputed trajectory used for this visualization. <a href={assetUrl(record.mat)}>Download the source MAT file</a>.</p> : <p>Loading the source trajectory…</p>}</div></section>
       </div>
     </main>
   );

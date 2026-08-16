@@ -20,7 +20,8 @@ test("server-renders the scientific viewer", async () => {
   assert.match(html, />DP<\/div>/i);
   assert.doesNotMatch(html, /precomputed trajectories · schema v1/i);
   assert.doesNotMatch(html, /Periodic residual/i);
-  assert.match(html, /Coordinate convention/);
+  assert.doesNotMatch(html, /Coordinate convention/);
+  assert.match(html, /Source MAT file/);
   assert.match(html, /Loading trajectory/);
   assert.match(html, /Orbit family/);
   assert.match(html, /id="energy-slider"/i);

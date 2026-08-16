@@ -142,7 +142,7 @@ canvas { display: block; width: 100%; height: 100%; }
 .datum a { color: var(--accent-dark); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .error { padding: 42px; color: var(--gold); }
 .loading { padding: 72px 24px; text-align: center; color: var(--muted); font: 13px var(--font-geist-mono); }
-.method-note { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; line-height: 1.65; }
+.method-note { display: grid; grid-template-columns: minmax(0, 760px); margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; line-height: 1.65; }
 .method-note h2 { color: var(--ink); margin: 0 0 10px; font-size: 15px; }
 .method-note p { margin: 0; }
 .method-note a { color: var(--accent-dark); text-underline-offset: 3px; }
@@ -173,7 +173,7 @@ canvas { display: block; width: 100%; height: 100%; }
   .transport { grid-template-columns: 1fr 1fr; }
   .phase-slider { grid-column: 1 / -1; grid-row: 2; }
   .phase-label { text-align: left; }
-  .method-note { grid-template-columns: 1fr; gap: 24px; }
+  .method-note { grid-template-columns: 1fr; }
   .parameter-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .parameter-grid div { padding-inline: 6px; }
   .canvas-wrap { min-height: 0; }

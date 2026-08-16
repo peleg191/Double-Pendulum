@@ -42,7 +42,7 @@ The browser does not integrate the equations of motion, search for periodic orbi
 
 ## Publish with GitHub Pages
 
-The Pages build is deliberately lean: it contains the static viewer and `public/data/` only. MATLAB sources, raw trajectories, downloadable MAT files, tests, development dependencies, and the server build are not uploaded as the Pages artifact.
+The Pages build contains the static viewer, exported trajectory JSON, and the corresponding downloadable MAT files. MATLAB scripts, raw source directories, tests, development dependencies, and the server build are not uploaded as the Pages artifact.
 
 Test the Pages build locally:
 

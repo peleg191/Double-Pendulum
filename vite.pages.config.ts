@@ -10,7 +10,6 @@ export default defineConfig({
   root: resolve(projectRoot, "pages-src"),
   base: "./",
   publicDir: false,
-  define: { __PAGES_BUILD__: "true" },
   plugins: [
     react(),
     {
@@ -18,6 +17,7 @@ export default defineConfig({
       closeBundle() {
         mkdirSync(outputDirectory, { recursive: true });
         cpSync(resolve(projectRoot, "public", "data"), resolve(outputDirectory, "data"), { recursive: true });
+        cpSync(resolve(projectRoot, "public", "mat"), resolve(outputDirectory, "mat"), { recursive: true });
         writeFileSync(resolve(outputDirectory, ".nojekyll"), "");
       },
     },
