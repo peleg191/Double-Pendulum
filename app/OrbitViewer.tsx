@@ -117,10 +117,12 @@ function PendulumCanvas({ orbit, phase, theme }: { orbit: OrbitData; phase: numb
     ctx.strokeStyle = colors.pendulum2; ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
     ctx.fillStyle = colors.guide; ctx.beginPath(); ctx.arc(origin.x, origin.y, 9, 0, TAU); ctx.fill();
     ctx.fillStyle = colors.foreground; ctx.beginPath(); ctx.arc(origin.x, origin.y, 4, 0, TAU); ctx.fill();
-    ctx.fillStyle = colors.pendulum1Glow; ctx.beginPath(); ctx.arc(p1.x, p1.y, 17, 0, TAU); ctx.fill();
-    ctx.fillStyle = colors.pendulum2Glow; ctx.beginPath(); ctx.arc(p2.x, p2.y, 19, 0, TAU); ctx.fill();
-    ctx.fillStyle = colors.pendulum1; ctx.strokeStyle = colors.foreground; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(p1.x, p1.y, 10, 0, TAU); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = colors.pendulum2; ctx.beginPath(); ctx.arc(p2.x, p2.y, 12, 0, TAU); ctx.fill(); ctx.stroke();
+    const massGlowRadius = 17;
+    const massRadius = 10;
+    ctx.fillStyle = colors.pendulum1Glow; ctx.beginPath(); ctx.arc(p1.x, p1.y, massGlowRadius, 0, TAU); ctx.fill();
+    ctx.fillStyle = colors.pendulum2Glow; ctx.beginPath(); ctx.arc(p2.x, p2.y, massGlowRadius, 0, TAU); ctx.fill();
+    ctx.fillStyle = colors.pendulum1; ctx.strokeStyle = colors.foreground; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(p1.x, p1.y, massRadius, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = colors.pendulum2; ctx.beginPath(); ctx.arc(p2.x, p2.y, massRadius, 0, TAU); ctx.fill(); ctx.stroke();
   }, [orbit, phase, state.theta1, state.theta2, theme]);
   return <canvas ref={ref} aria-label="Animated physical double pendulum" role="img" />;
 }
@@ -168,8 +170,9 @@ function SystemSchematic({ theme }: { theme: ThemeMode }) {
       ctx.fillStyle = fill; ctx.strokeStyle = colors.foreground; ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.arc(point.x, point.y, radius, 0, TAU); ctx.fill(); ctx.stroke();
     };
-    drawMass(p1, scale * .026, colors.pendulum1);
-    drawMass(p2, scale * .031, colors.pendulum2);
+    const massRadius = scale * .026;
+    drawMass(p1, massRadius, colors.pendulum1);
+    drawMass(p2, massRadius, colors.pendulum2);
     ctx.fillStyle = colors.foreground; ctx.beginPath(); ctx.arc(origin.x, origin.y, scale * .012, 0, TAU); ctx.fill();
 
     const gx = width * .87, gy = height * .25, arrowLength = scale * .18;
