@@ -38,6 +38,9 @@ test("mathematical labels use semantic MathML", async () => {
   assert.match(source, /<math[^>]*className="math-expression"/);
   assert.match(source, /<msub>/);
   assert.match(source, /<mfrac>/);
+  for (const label of ["theta-1", "theta-2", "mass-1", "mass-2", "length-1", "length-2", "gravity"]) {
+    assert.match(source, new RegExp(`schematic-${label}[^>]*><MathVariable`));
+  }
 });
 
 test("exported orbit obeys the documented structural contract", async () => {

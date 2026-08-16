@@ -79,13 +79,24 @@ h1 { margin: 0; width: 100%; max-width: none; font-size: clamp(42px, 7vw, 100px)
 .system-drawer.is-open .system-drawer-reveal { grid-template-rows: 1fr; opacity: 1; border-top-width: 1px; pointer-events: auto; visibility: visible; transition: grid-template-rows .42s cubic-bezier(.2, .8, .2, 1), opacity .3s ease .08s, border-top-width .42s ease, visibility 0s; }
 .system-drawer-content { min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(300px, 420px) minmax(0, 1fr); }
 .system-diagram { aspect-ratio: 1 / 1; min-width: 0; border-right: 1px solid var(--line); }
-.system-diagram canvas { width: 100%; height: 100%; }
+.system-schematic { position: relative; width: 100%; height: 100%; }
+.system-schematic canvas { width: 100%; height: 100%; }
+.schematic-label { position: absolute; z-index: 1; color: var(--muted); line-height: 1; pointer-events: none; white-space: nowrap; }
+.schematic-label .math-expression { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", serif; font-size: 13px; }
+.schematic-theta-1 { left: 41.1%; top: 28.7%; transform: translate(-50%, -50%); }
+.schematic-theta-2 { left: 55.15%; top: 52.7%; transform: translate(-50%, -50%); }
+.schematic-mass-1 { left: calc(48.79% - 9px); top: 41.72%; color: var(--ink); transform: translate(-100%, -50%); }
+.schematic-mass-2 { left: calc(66.07% - 9px); top: 64.63%; color: var(--ink); transform: translate(-100%, -50%); }
+.schematic-length-1 { left: calc(44.7% + 46px); top: 28.86%; transform: translate(-50%, -50%); }
+.schematic-length-2 { left: calc(60.28% + 48px); top: 53.17%; transform: translate(-50%, -50%); }
+.schematic-gravity { left: calc(87% - 12px); top: 35.44%; color: var(--gold); transform: translate(-100%, -50%); }
 .system-copy { align-self: center; padding: clamp(28px, 5vw, 64px); max-width: 720px; }
 .system-copy > p { margin: 0; max-width: 620px; color: var(--muted); line-height: 1.65; }
 .parameter-grid { display: grid; grid-template-columns: repeat(5, 1fr); margin: 30px 0 0; border: 1px solid var(--line); }
 .parameter-grid div { padding: 15px 12px; text-align: center; }
 .parameter-grid div + div { border-left: 1px solid var(--line); }
 .parameter-grid dt { color: var(--muted); font: 11px var(--font-geist-mono); }
+.parameter-grid .math-expression { font-size: 13px; }
 .parameter-grid dd { margin: 6px 0 0; color: var(--ink); font: 600 17px var(--font-geist-mono); }
 
 .viewer { border: 1px solid var(--line); background: var(--panel); box-shadow: 0 26px 70px var(--shadow); }

@@ -125,6 +125,11 @@ function PendulumCanvas({ orbit, phase, theme }: { orbit: OrbitData; phase: numb
   return <canvas ref={ref} aria-label="Animated physical double pendulum" role="img" />;
 }
 
+function MathVariable({ symbol, subscript, value, label }: { symbol: string; subscript?: number; value?: number; label: string }) {
+  const variable = subscript === undefined ? <mi>{symbol}</mi> : <msub><mi>{symbol}</mi><mn>{subscript}</mn></msub>;
+  return <math className="math-expression" display="inline" aria-label={label}><mrow>{variable}{value === undefined ? null : <><mo>=</mo><mn>{value}</mn></>}</mrow></math>;
+}
+
 function SystemSchematic({ theme }: { theme: ThemeMode }) {
   const ref = useCanvas((ctx, width, height) => {
     const colors = canvasPalette(theme);
@@ -146,14 +151,12 @@ function SystemSchematic({ theme }: { theme: ThemeMode }) {
     ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p1.x, p1.y + rodLength * .76); ctx.stroke();
     ctx.setLineDash([]);
 
-    const drawRightAngle = (center: { x: number; y: number }, angleMagnitude: number, radius: number, label: string) => {
+    const drawRightAngle = (center: { x: number; y: number }, angleMagnitude: number, radius: number) => {
       ctx.strokeStyle = colors.muted; ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.arc(center.x, center.y, radius, Math.PI / 2 - angleMagnitude, Math.PI / 2); ctx.stroke();
-      ctx.fillStyle = colors.muted; ctx.font = `italic ${Math.max(12, scale * .035)}px serif`; ctx.textAlign = "center";
-      ctx.fillText(label, center.x + Math.sin(angleMagnitude / 2) * radius * 1.45, center.y + Math.cos(angleMagnitude / 2) * radius * 1.45);
     };
-    drawRightAngle(origin, theta1, scale * .09, "θ₁");
-    drawRightAngle(p1, theta2, scale * .08, "θ₂");
+    drawRightAngle(origin, theta1, scale * .09);
+    drawRightAngle(p1, theta2, scale * .08);
 
     ctx.lineCap = "round";
     ctx.strokeStyle = colors.pendulum1Glow; ctx.lineWidth = 11; ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
@@ -161,28 +164,29 @@ function SystemSchematic({ theme }: { theme: ThemeMode }) {
     ctx.strokeStyle = colors.pendulum1; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
     ctx.strokeStyle = colors.pendulum2; ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
 
-    const drawMass = (point: { x: number; y: number }, radius: number, fill: string, label: string) => {
+    const drawMass = (point: { x: number; y: number }, radius: number, fill: string) => {
       ctx.fillStyle = fill; ctx.strokeStyle = colors.foreground; ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.arc(point.x, point.y, radius, 0, TAU); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = colors.foreground; ctx.font = `600 ${Math.max(11, scale * .031)}px monospace`; ctx.textAlign = "right";
-      ctx.fillText(label, point.x - radius - 9, point.y + 4);
     };
-    drawMass(p1, scale * .026, colors.pendulum1, "m₁ = 1");
-    drawMass(p2, scale * .031, colors.pendulum2, "m₂ = 1");
+    drawMass(p1, scale * .026, colors.pendulum1);
+    drawMass(p2, scale * .031, colors.pendulum2);
     ctx.fillStyle = colors.foreground; ctx.beginPath(); ctx.arc(origin.x, origin.y, scale * .012, 0, TAU); ctx.fill();
-
-    ctx.fillStyle = colors.muted; ctx.font = `${Math.max(11, scale * .029)}px monospace`; ctx.textAlign = "center";
-    ctx.fillText("L₁ = 1", (origin.x + p1.x) / 2 + 46, (origin.y + p1.y) / 2);
-    ctx.fillText("L₂ = 1", (p1.x + p2.x) / 2 + 48, (p1.y + p2.y) / 2);
 
     const gx = width * .87, gy = height * .25, arrowLength = scale * .18;
     ctx.strokeStyle = colors.pendulum2; ctx.fillStyle = colors.pendulum2; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx, gy + arrowLength); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(gx, gy + arrowLength); ctx.lineTo(gx - 6, gy + arrowLength - 10); ctx.lineTo(gx + 6, gy + arrowLength - 10); ctx.closePath(); ctx.fill();
-    ctx.font = `600 ${Math.max(11, scale * .03)}px monospace`; ctx.textAlign = "right";
-    ctx.fillText("g = 1", gx - 12, gy + arrowLength * .58);
   }, [theme]);
-  return <canvas ref={ref} aria-label="Double pendulum system schematic with unit lengths, masses, and gravity" role="img" />;
+  return <div className="system-schematic" role="group" aria-label="Double pendulum system schematic with unit lengths, masses, and gravity">
+    <canvas ref={ref} aria-hidden="true" />
+    <span className="schematic-label schematic-theta-1"><MathVariable symbol="θ" subscript={1} label="theta one" /></span>
+    <span className="schematic-label schematic-theta-2"><MathVariable symbol="θ" subscript={2} label="theta two" /></span>
+    <span className="schematic-label schematic-mass-1"><MathVariable symbol="m" subscript={1} value={1} label="m one equals one" /></span>
+    <span className="schematic-label schematic-mass-2"><MathVariable symbol="m" subscript={2} value={1} label="m two equals one" /></span>
+    <span className="schematic-label schematic-length-1"><MathVariable symbol="L" subscript={1} value={1} label="L one equals one" /></span>
+    <span className="schematic-label schematic-length-2"><MathVariable symbol="L" subscript={2} value={1} label="L two equals one" /></span>
+    <span className="schematic-label schematic-gravity"><MathVariable symbol="g" value={1} label="g equals one" /></span>
+  </div>;
 }
 
 function ConfigurationCanvas({ orbit, phase, theme }: { orbit: OrbitData; phase: number; theme: ThemeMode }) {
@@ -356,7 +360,7 @@ export function OrbitViewer() {
         <section className="hero"><div><p className="eyebrow">Interactive scientific viewer</p><h1>Saddle Orbit For the Egalitarian Double Pendulum</h1></div><div className="hero-note"><strong>Explore periodic motion near a saddle.</strong><br />Every curve shown here is loaded from a stored trajectory, precomputed by the shooting algorithm as a non linear continuation of the linear normal mode.</div></section>
         <aside className={`system-drawer${isSystemDrawerOpen ? " is-open" : ""}`} aria-labelledby="system-heading">
           <div className="system-drawer-bar"><div><p className="eyebrow">Physical model</p><h2 id="system-heading">Egalitarian double pendulum</h2></div><button className="drawer-toggle" type="button" aria-expanded={isSystemDrawerOpen} aria-controls="system-drawer-content" onClick={() => setIsSystemDrawerOpen((value) => !value)}><span className="drawer-icon" aria-hidden="true">⌃</span>{isSystemDrawerOpen ? "Minimize" : "Expand"}</button></div>
-          <div className="system-drawer-reveal" aria-hidden={!isSystemDrawerOpen}><div className="system-drawer-content" id="system-drawer-content"><div className="system-diagram"><SystemSchematic theme={theme} /></div><div className="system-copy"><p>Both links and both point masses are identical. Angles are measured from the downward vertical, and the dimensionless gravitational acceleration is fixed at unity.</p><dl className="parameter-grid"><div><dt>L<sub>1</sub></dt><dd>1</dd></div><div><dt>L<sub>2</sub></dt><dd>1</dd></div><div><dt>m<sub>1</sub></dt><dd>1</dd></div><div><dt>m<sub>2</sub></dt><dd>1</dd></div><div><dt>g</dt><dd>1</dd></div></dl></div></div></div>
+          <div className="system-drawer-reveal" aria-hidden={!isSystemDrawerOpen}><div className="system-drawer-content" id="system-drawer-content"><div className="system-diagram"><SystemSchematic theme={theme} /></div><div className="system-copy"><p>Both links and both point masses are identical. Angles are measured from the downward vertical, and the dimensionless gravitational acceleration is fixed at unity.</p><dl className="parameter-grid"><div><dt><MathVariable symbol="L" subscript={1} label="L one" /></dt><dd>1</dd></div><div><dt><MathVariable symbol="L" subscript={2} label="L two" /></dt><dd>1</dd></div><div><dt><MathVariable symbol="m" subscript={1} label="m one" /></dt><dd>1</dd></div><div><dt><MathVariable symbol="m" subscript={2} label="m two" /></dt><dd>1</dd></div><div><dt><MathVariable symbol="g" label="g" /></dt><dd>1</dd></div></dl></div></div></div>
         </aside>
         <section className="viewer" aria-label="Lyapunov orbit viewer">
           <div className="viewer-toolbar"><div className="selection-controls"><fieldset className="family-fieldset"><legend>Orbit family</legend><div className="family-tabs">{manifest?.families.map((family) => <label className={`family-option${selectedFamilyId === family.id ? " is-selected" : ""}`} key={family.id}><input type="radio" name="orbit-family" value={family.id} checked={selectedFamilyId === family.id} onChange={() => chooseFamily(family.id)} /><span className="family-name">{family.label}</span><span className="family-count">{family.orbit_count} orbits</span></label>)}</div></fieldset><div className="energy-control"><div className="energy-heading"><label htmlFor="energy-slider">Computed energy</label><output htmlFor="energy-slider">{selectedOrbitRecord ? <>E = {formatEnergy(selectedOrbitRecord.energy)}</> : "—"}</output></div><input id="energy-slider" className="energy-slider" type="range" min={familyOrbits[0]?.energy ?? 0} max={familyOrbits.at(-1)?.energy ?? 0} step="any" value={selectedOrbitRecord?.energy ?? 0} disabled={!familyOrbits.length} aria-valuetext={selectedOrbitRecord ? `Energy ${formatEnergy(selectedOrbitRecord.energy)}` : "No orbit selected"} onChange={(event) => chooseClosestEnergy(Number(event.target.value))} onKeyDown={handleEnergyKeys} /><div className="energy-scale"><span>{familyOrbits.length ? `E = ${formatEnergy(familyOrbits[0].energy)}` : "—"}</span><span>{familyOrbits.length} stored levels</span><span>{familyOrbits.length ? `E = ${formatEnergy(familyOrbits.at(-1)!.energy)}` : "—"}</span></div><div className="energy-alternative"><select id="energy-select" aria-label="Choose exact computed energy" value={selectedId} disabled={!familyOrbits.length} onChange={(event) => setSelectedId(event.target.value)}>{familyOrbits.map((item) => <option key={item.id} value={item.id}>E = {formatEnergy(item.energy)}</option>)}</select></div></div></div></div>
