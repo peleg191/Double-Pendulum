@@ -22,7 +22,8 @@ test("server-renders the scientific viewer", async () => {
   assert.match(html, /Loading trajectory/);
   assert.match(html, /Orbit family/);
   assert.match(html, /id="energy-slider"/i);
-  assert.match(html, /precomputed levels/i);
+  assert.match(html, /linear energy scale/i);
+  assert.match(html, /id="energy-select"/i);
   assert.match(html, /Light mode/);
   assert.doesNotMatch(html, /Demonstration dataset/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
