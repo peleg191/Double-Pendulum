@@ -59,6 +59,16 @@ test("energy changes preserve the viewer while the next trajectory loads", async
   assert.match(source, /return \(\) => controller\.abort\(\)/);
 });
 
+test("GitHub Pages self-hosts the same Geist fonts as localhost", async () => {
+  const css = await readFile(new URL("../pages-src/pages.css", import.meta.url), "utf8");
+  assert.match(css, /font-family: "Geist"/);
+  assert.match(css, /font-family: "Geist Mono"/);
+  assert.match(css, /url\("\.\/fonts\/geist-latin\.woff2"\)/);
+  assert.match(css, /url\("\.\/fonts\/geist-mono-latin\.woff2"\)/);
+  assert.ok((await readFile(new URL("../pages-src/fonts/geist-latin.woff2", import.meta.url))).byteLength > 20_000);
+  assert.ok((await readFile(new URL("../pages-src/fonts/geist-mono-latin.woff2", import.meta.url))).byteLength > 20_000);
+});
+
 test("exported orbit obeys the documented structural contract", async () => {
   const manifest = JSON.parse(await readFile(new URL("../public/data/manifest.json", import.meta.url), "utf8"));
   assert.equal(manifest.families.length, 2);
