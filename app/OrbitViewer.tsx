@@ -134,10 +134,10 @@ function SystemSchematic({ theme }: { theme: ThemeMode }) {
     ctx.fillRect(0, 0, width, height);
 
     const scale = Math.min(width, height);
-    const origin = { x: width * .62, y: height * .16 };
+    const origin = { x: width * .38, y: height * .16 };
     const rodLength = scale * .29;
-    const theta1 = -.48;
-    const theta2 = -.66;
+    const theta1 = .48;
+    const theta2 = .66;
     const p1 = { x: origin.x + rodLength * Math.sin(theta1), y: origin.y + rodLength * Math.cos(theta1) };
     const p2 = { x: p1.x + rodLength * Math.sin(theta2), y: p1.y + rodLength * Math.cos(theta2) };
 
@@ -148,14 +148,14 @@ function SystemSchematic({ theme }: { theme: ThemeMode }) {
     ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p1.x, p1.y + rodLength * .76); ctx.stroke();
     ctx.setLineDash([]);
 
-    const drawLeftAngle = (center: { x: number; y: number }, angleMagnitude: number, radius: number, label: string) => {
+    const drawRightAngle = (center: { x: number; y: number }, angleMagnitude: number, radius: number, label: string) => {
       ctx.strokeStyle = colors.muted; ctx.lineWidth = 1.2;
-      ctx.beginPath(); ctx.arc(center.x, center.y, radius, Math.PI / 2, Math.PI / 2 + angleMagnitude); ctx.stroke();
+      ctx.beginPath(); ctx.arc(center.x, center.y, radius, Math.PI / 2 - angleMagnitude, Math.PI / 2); ctx.stroke();
       ctx.fillStyle = colors.muted; ctx.font = `italic ${Math.max(12, scale * .035)}px serif`; ctx.textAlign = "center";
-      ctx.fillText(label, center.x - Math.sin(angleMagnitude / 2) * radius * 1.45, center.y + Math.cos(angleMagnitude / 2) * radius * 1.45);
+      ctx.fillText(label, center.x + Math.sin(angleMagnitude / 2) * radius * 1.45, center.y + Math.cos(angleMagnitude / 2) * radius * 1.45);
     };
-    drawLeftAngle(origin, Math.abs(theta1), scale * .09, "θ₁");
-    drawLeftAngle(p1, Math.abs(theta2), scale * .08, "θ₂");
+    drawRightAngle(origin, theta1, scale * .09, "θ₁");
+    drawRightAngle(p1, theta2, scale * .08, "θ₂");
 
     ctx.lineCap = "round";
     ctx.strokeStyle = colors.pendulum1Glow; ctx.lineWidth = 11; ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
@@ -166,23 +166,23 @@ function SystemSchematic({ theme }: { theme: ThemeMode }) {
     const drawMass = (point: { x: number; y: number }, radius: number, fill: string, label: string) => {
       ctx.fillStyle = fill; ctx.strokeStyle = colors.foreground; ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.arc(point.x, point.y, radius, 0, TAU); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = colors.foreground; ctx.font = `600 ${Math.max(11, scale * .031)}px monospace`; ctx.textAlign = "left";
-      ctx.fillText(label, point.x + radius + 9, point.y + 4);
+      ctx.fillStyle = colors.foreground; ctx.font = `600 ${Math.max(11, scale * .031)}px monospace`; ctx.textAlign = "right";
+      ctx.fillText(label, point.x - radius - 9, point.y + 4);
     };
     drawMass(p1, scale * .026, colors.pendulum1, "m₁ = 1");
     drawMass(p2, scale * .031, colors.pendulum2, "m₂ = 1");
     ctx.fillStyle = colors.foreground; ctx.beginPath(); ctx.arc(origin.x, origin.y, scale * .012, 0, TAU); ctx.fill();
 
     ctx.fillStyle = colors.muted; ctx.font = `${Math.max(11, scale * .029)}px monospace`; ctx.textAlign = "center";
-    ctx.fillText("L₁ = 1", (origin.x + p1.x) / 2 - 46, (origin.y + p1.y) / 2);
-    ctx.fillText("L₂ = 1", (p1.x + p2.x) / 2 - 48, (p1.y + p2.y) / 2);
+    ctx.fillText("L₁ = 1", (origin.x + p1.x) / 2 + 46, (origin.y + p1.y) / 2);
+    ctx.fillText("L₂ = 1", (p1.x + p2.x) / 2 + 48, (p1.y + p2.y) / 2);
 
-    const gx = width * .13, gy = height * .25, arrowLength = scale * .18;
+    const gx = width * .87, gy = height * .25, arrowLength = scale * .18;
     ctx.strokeStyle = colors.pendulum2; ctx.fillStyle = colors.pendulum2; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx, gy + arrowLength); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(gx, gy + arrowLength); ctx.lineTo(gx - 6, gy + arrowLength - 10); ctx.lineTo(gx + 6, gy + arrowLength - 10); ctx.closePath(); ctx.fill();
-    ctx.font = `600 ${Math.max(11, scale * .03)}px monospace`; ctx.textAlign = "left";
-    ctx.fillText("g = 1", gx + 12, gy + arrowLength * .58);
+    ctx.font = `600 ${Math.max(11, scale * .03)}px monospace`; ctx.textAlign = "right";
+    ctx.fillText("g = 1", gx - 12, gy + arrowLength * .58);
   }, [theme]);
   return <canvas ref={ref} aria-label="Double pendulum system schematic with unit lengths, masses, and gravity" role="img" />;
 }
@@ -332,8 +332,8 @@ export function OrbitViewer() {
       <div className="content">
         <section className="hero"><div><p className="eyebrow">Interactive scientific viewer</p><h1>Saddle Orbit For the Egalitarian Double Pendulum</h1></div><div className="hero-note"><strong>Explore periodic motion near a saddle.</strong><br />Every curve shown here is loaded from a stored trajectory. The browser synchronizes and renders the data; it does not solve the dynamics.</div></section>
         <aside className={`system-drawer${isSystemDrawerOpen ? " is-open" : ""}`} aria-labelledby="system-heading">
-          <div className="system-drawer-bar"><div><p className="eyebrow">Mechanical model</p><h2 id="system-heading">Egalitarian double pendulum</h2></div><button className="drawer-toggle" type="button" aria-expanded={isSystemDrawerOpen} aria-controls="system-drawer-content" onClick={() => setIsSystemDrawerOpen((value) => !value)}><span aria-hidden="true">{isSystemDrawerOpen ? "−" : "+"}</span>{isSystemDrawerOpen ? "Minimize" : "Expand"}</button></div>
-          {isSystemDrawerOpen && <div className="system-drawer-content" id="system-drawer-content"><div className="system-diagram"><SystemSchematic theme={theme} /></div><div className="system-copy"><p>Both links and both point masses are identical. Angles are measured to the left from the downward vertical, and the dimensionless gravitational acceleration is fixed at unity.</p><dl className="parameter-grid"><div><dt>L<sub>1</sub></dt><dd>1</dd></div><div><dt>L<sub>2</sub></dt><dd>1</dd></div><div><dt>m<sub>1</sub></dt><dd>1</dd></div><div><dt>m<sub>2</sub></dt><dd>1</dd></div><div><dt>g</dt><dd>1</dd></div></dl></div></div>}
+          <div className="system-drawer-bar"><div><p className="eyebrow">Mechanical model</p><h2 id="system-heading">Egalitarian double pendulum</h2></div><button className="drawer-toggle" type="button" aria-expanded={isSystemDrawerOpen} aria-controls="system-drawer-content" onClick={() => setIsSystemDrawerOpen((value) => !value)}><span className="drawer-icon" aria-hidden="true">⌃</span>{isSystemDrawerOpen ? "Minimize" : "Expand"}</button></div>
+          <div className="system-drawer-reveal" aria-hidden={!isSystemDrawerOpen}><div className="system-drawer-content" id="system-drawer-content"><div className="system-diagram"><SystemSchematic theme={theme} /></div><div className="system-copy"><p>Both links and both point masses are identical. Angles are measured from the downward vertical, and the dimensionless gravitational acceleration is fixed at unity.</p><dl className="parameter-grid"><div><dt>L<sub>1</sub></dt><dd>1</dd></div><div><dt>L<sub>2</sub></dt><dd>1</dd></div><div><dt>m<sub>1</sub></dt><dd>1</dd></div><div><dt>m<sub>2</sub></dt><dd>1</dd></div><div><dt>g</dt><dd>1</dd></div></dl></div></div></div>
         </aside>
         <section className="viewer" aria-label="Lyapunov orbit viewer">
           <div className="viewer-toolbar"><div className="selector-wrap"><label className="field-label" htmlFor="family-select">Family</label><select id="family-select" value={selectedFamilyId} onChange={(event) => chooseFamily(event.target.value)} disabled={!manifest}>{manifest?.families.map((family) => <option key={family.id} value={family.id}>{family.label}</option>)}</select><label className="field-label" htmlFor="orbit-select">Energy</label><select id="orbit-select" value={selectedId} onChange={(event) => setSelectedId(event.target.value)} disabled={!manifest}>{familyOrbits.map((item) => <option key={item.id} value={item.id}>E = {item.energy.toFixed(3)}</option>)}</select></div><div className="readout"><strong>{selectedFamily?.orbit_count ?? 0}</strong> computed orbits</div></div>
