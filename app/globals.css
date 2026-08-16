@@ -114,7 +114,14 @@ h1 { margin: 0; width: 100%; max-width: none; font-size: clamp(42px, 7vw, 100px)
 .family-count { color: var(--muted); font: 10px var(--font-geist-mono); text-transform: uppercase; letter-spacing: .06em; }
 .energy-control { min-width: 0; }
 .energy-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+.energy-value-actions { display: flex; align-items: center; gap: 10px; }
 .energy-heading output { color: var(--accent-dark); font: 650 clamp(18px, 2.2vw, 28px) var(--font-geist-mono); letter-spacing: -.04em; }
+.mat-download-wrap { position: relative; display: inline-flex; }
+.mat-download { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--control-border); background: var(--control); color: var(--accent-dark); text-decoration: none; font: 700 20px/1 var(--font-geist-sans); transition: border-color .18s ease, background-color .18s ease, color .18s ease; }
+.mat-download:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--control)); }
+.mat-download:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
+.mat-download-tooltip { position: absolute; right: 0; bottom: calc(100% + 10px); z-index: 5; width: 280px; padding: 10px 12px; border: 1px solid var(--line); background: var(--ink); color: var(--panel); box-shadow: 0 12px 28px var(--shadow); font: 11px/1.5 var(--font-geist-sans); letter-spacing: 0; text-transform: none; opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity .16s ease, transform .16s ease, visibility 0s linear .16s; pointer-events: none; }
+.mat-download-wrap:hover .mat-download-tooltip, .mat-download-wrap:focus-within .mat-download-tooltip { opacity: 1; visibility: visible; transform: translateY(0); transition: opacity .16s ease, transform .16s ease, visibility 0s; }
 .energy-slider { width: 100%; height: 30px; margin: 0; accent-color: var(--accent); cursor: ew-resize; }
 .energy-slider:disabled { cursor: not-allowed; opacity: .5; }
 .energy-scale { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; color: var(--muted); font: 10px var(--font-geist-mono); }
@@ -156,11 +163,6 @@ canvas { display: block; width: 100%; height: 100%; }
 .datum a { color: var(--accent-dark); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .error { padding: 42px; color: var(--gold); }
 .loading { padding: 72px 24px; text-align: center; color: var(--muted); font: 13px var(--font-geist-mono); }
-.method-note { display: grid; grid-template-columns: minmax(0, 760px); margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; line-height: 1.65; }
-.method-note h2 { color: var(--ink); margin: 0 0 10px; font-size: 15px; }
-.method-note p { margin: 0; }
-.method-note a { color: var(--accent-dark); text-underline-offset: 3px; }
-
 @media (max-width: 900px) {
   .system-drawer-content { grid-template-columns: 1fr; }
   .system-diagram { width: min(100%, 520px); justify-self: center; border-right: 0; border-bottom: 1px solid var(--line); }
@@ -187,7 +189,6 @@ canvas { display: block; width: 100%; height: 100%; }
   .transport { grid-template-columns: 1fr 1fr; }
   .phase-slider { grid-column: 1 / -1; grid-row: 2; }
   .phase-label { text-align: left; }
-  .method-note { grid-template-columns: 1fr; }
   .parameter-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .parameter-grid div { padding-inline: 6px; }
   .canvas-wrap { min-height: 0; }

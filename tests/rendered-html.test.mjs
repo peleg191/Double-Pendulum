@@ -21,7 +21,7 @@ test("server-renders the scientific viewer", async () => {
   assert.doesNotMatch(html, /precomputed trajectories · schema v1/i);
   assert.doesNotMatch(html, /Periodic residual/i);
   assert.doesNotMatch(html, /Coordinate convention/);
-  assert.match(html, /Source MAT file/);
+  assert.doesNotMatch(html, /Source MAT file/);
   assert.match(html, /Loading trajectory/);
   assert.match(html, /Orbit family/);
   assert.match(html, /id="energy-slider"/i);
@@ -41,6 +41,14 @@ test("mathematical labels use semantic MathML", async () => {
   for (const label of ["theta-1", "theta-2", "mass-1", "mass-2", "length-1", "length-2", "gravity"]) {
     assert.match(source, new RegExp(`schematic-${label}[^>]*><MathVariable`));
   }
+});
+
+test("source MAT download is attached to the energy control", async () => {
+  const source = await readFile(new URL("../app/OrbitViewer.tsx", import.meta.url), "utf8");
+  assert.match(source, /className="mat-download"[^>]*download/);
+  assert.match(source, /aria-describedby="mat-download-tooltip"/);
+  assert.match(source, /role="tooltip"/);
+  assert.doesNotMatch(source, /className="method-note"/);
 });
 
 test("exported orbit obeys the documented structural contract", async () => {
