@@ -62,10 +62,10 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .theme-toggle:hover { border-color: var(--accent); }
 
 .content { max-width: 1440px; margin: 0 auto; padding: clamp(36px, 6vw, 76px) clamp(20px, 5vw, 72px) 72px; }
-.hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 420px); gap: clamp(32px, 7vw, 100px); align-items: end; margin-bottom: 44px; }
+.hero { width: 100%; margin-bottom: 44px; }
 .eyebrow { margin: 0 0 14px; font: 600 12px var(--font-geist-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--accent-dark); }
-h1 { margin: 0; max-width: 900px; font-size: clamp(38px, 5.2vw, 72px); line-height: .96; letter-spacing: -.05em; font-weight: 560; }
-.hero-note { border-left: 2px solid var(--accent); padding-left: 22px; color: var(--muted); line-height: 1.6; font-size: 15px; }
+h1 { margin: 0; width: 100%; max-width: none; font-size: clamp(42px, 7vw, 100px); line-height: .94; letter-spacing: -.055em; font-weight: 560; text-wrap: balance; }
+.hero-note { width: 100%; margin-top: clamp(24px, 3.5vw, 42px); padding-top: 18px; border-top: 2px solid var(--accent); color: var(--muted); line-height: 1.6; font-size: 15px; }
 .hero-note strong { color: var(--ink); font-weight: 600; }
 
 .system-drawer { margin-bottom: 44px; border: 1px solid var(--line); background: var(--panel); }
@@ -131,7 +131,6 @@ canvas { display: block; width: 100%; height: 100%; }
 .method-note a { color: var(--accent-dark); text-underline-offset: 3px; }
 
 @media (max-width: 900px) {
-  .hero { grid-template-columns: 1fr; }
   .system-drawer-content { grid-template-columns: 1fr; }
   .system-diagram { width: min(100%, 520px); justify-self: center; border-right: 0; border-bottom: 1px solid var(--line); }
   .visual-grid { grid-template-columns: 1fr; }
