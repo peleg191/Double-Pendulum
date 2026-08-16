@@ -51,6 +51,14 @@ test("source MAT download is attached to the energy control", async () => {
   assert.doesNotMatch(source, /className="method-note"/);
 });
 
+test("energy changes preserve the viewer while the next trajectory loads", async () => {
+  const source = await readFile(new URL("../app/OrbitViewer.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /setOrbit\(null\)/);
+  assert.match(source, /new AbortController\(\)/);
+  assert.match(source, /signal: controller\.signal/);
+  assert.match(source, /return \(\) => controller\.abort\(\)/);
+});
+
 test("exported orbit obeys the documented structural contract", async () => {
   const manifest = JSON.parse(await readFile(new URL("../public/data/manifest.json", import.meta.url), "utf8"));
   assert.equal(manifest.families.length, 2);
