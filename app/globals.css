@@ -123,6 +123,8 @@ select option { color: var(--ink); background-color: var(--control); }
 .panel-heading { display: flex; justify-content: space-between; align-items: baseline; padding: 18px 22px 0; }
 .panel-heading h2 { margin: 0; font-size: 15px; font-weight: 620; letter-spacing: -.01em; }
 .panel-heading span { color: var(--muted); font: 11px var(--font-geist-mono); }
+.math-expression { color: inherit; font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", serif; font-size: 15px; }
+.math-expression mo { padding-inline: .08em; }
 .canvas-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; min-height: 0; background: var(--panel); }
 canvas { display: block; width: 100%; height: 100%; }
 
@@ -131,7 +133,8 @@ canvas { display: block; width: 100%; height: 100%; }
 .transport button.primary { background: var(--accent); border-color: var(--accent); color: #ffffff; }
 .transport button:hover { border-color: var(--accent); }
 .phase-slider { width: 100%; accent-color: var(--accent); }
-.phase-label { font: 12px var(--font-geist-mono); color: var(--muted); min-width: 94px; text-align: right; }
+.phase-label { color: var(--muted); min-width: 112px; text-align: right; }
+.phase-label .math-expression { font-size: 16px; }
 .speed-select { min-width: 78px; }
 
 .data-strip { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); }

@@ -33,6 +33,13 @@ test("server-renders the scientific viewer", async () => {
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 
+test("mathematical labels use semantic MathML", async () => {
+  const source = await readFile(new URL("../app/OrbitViewer.tsx", import.meta.url), "utf8");
+  assert.match(source, /<math[^>]*className="math-expression"/);
+  assert.match(source, /<msub>/);
+  assert.match(source, /<mfrac>/);
+});
+
 test("exported orbit obeys the documented structural contract", async () => {
   const manifest = JSON.parse(await readFile(new URL("../public/data/manifest.json", import.meta.url), "utf8"));
   assert.equal(manifest.families.length, 2);
