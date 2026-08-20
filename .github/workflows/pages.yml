@@ -29,6 +29,10 @@ jobs:
         run: npm ci
       - name: Build static viewer
         run: npm run build:pages
+      - name: Copy PDF
+        run: |
+          mkdir -p pages-dist/pdf
+          cp pages-src/pdf/file.pdf pages-dist/pdf/file.pdf
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
