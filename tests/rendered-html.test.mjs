@@ -59,16 +59,15 @@ test("energy changes preserve the viewer while the next trajectory loads", async
   assert.match(source, /return \(\) => controller\.abort\(\)/);
 });
 
-test("GitHub Pages self-hosts the same Geist fonts as localhost", async () => {
+test("GitHub Pages uses self-hosted Geist for both UI font stacks", async () => {
   const css = await readFile(new URL("../pages-src/pages.css", import.meta.url), "utf8");
   assert.match(css, /font-family: "Geist"/);
-  assert.match(css, /font-family: "GeistMonoPages"/);
   assert.match(css, /url\("\.\/fonts\/geist-latin\.woff2"\)/);
-  assert.match(css, /url\("\.\/fonts\/geist-mono-latin\.woff2"\)/);
+  assert.match(css, /--font-geist-mono: "Geist", Arial, sans-serif/);
+  assert.doesNotMatch(css, /Geist Mono|GeistMonoPages|geist-mono-latin/);
   assert.ok((await readFile(new URL("../pages-src/fonts/geist-latin.woff2", import.meta.url))).byteLength > 20_000);
-  assert.ok((await readFile(new URL("../pages-src/fonts/geist-mono-latin.woff2", import.meta.url))).byteLength > 20_000);
   const pagesHtml = await readFile(new URL("../pages-src/index.html", import.meta.url), "utf8");
-  assert.match(pagesHtml, /rel="preload"[^>]*geist-mono-latin\.woff2[^>]*as="font"/);
+  assert.doesNotMatch(pagesHtml, /geist-mono-latin/);
 });
 
 test("playback canvases toggle animation and default to double speed", async () => {

@@ -6,15 +6,7 @@
   src: url("./fonts/geist-latin.woff2") format("woff2");
 }
 
-@font-face {
-  font-family: "GeistMonoPages";
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url("./fonts/geist-mono-latin.woff2") format("woff2");
-}
-
 :root {
   --font-geist-sans: "Geist", Arial, sans-serif;
-  --font-geist-mono: "GeistMonoPages", "Courier New", monospace;
+  --font-geist-mono: "Geist", Arial, sans-serif;
 }
