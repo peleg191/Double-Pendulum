@@ -168,6 +168,9 @@ canvas[role="button"]:focus-visible { outline: 3px solid color-mix(in srgb, var(
 .datum a { color: var(--accent-dark); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .error { padding: 42px; color: var(--gold); }
 .loading { padding: 72px 24px; text-align: center; color: var(--muted); font: 13px var(--font-geist-mono); }
+.site-footer { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--line); }
+.visitor-count { display: flex; justify-content: flex-end; align-items: baseline; gap: 10px; margin: 0; color: var(--muted); font: 11px var(--font-geist-mono); letter-spacing: .08em; text-transform: uppercase; }
+.visitor-count strong { color: var(--ink); font-size: 14px; font-weight: 650; letter-spacing: 0; }
 @media (max-width: 900px) {
   .system-drawer-content { grid-template-columns: 1fr; }
   .system-diagram { width: min(100%, 520px); justify-self: center; border-right: 0; border-bottom: 1px solid var(--line); }

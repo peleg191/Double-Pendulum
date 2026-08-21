@@ -20,6 +20,8 @@ type CanvasPalette = {
 };
 
 const TAU = Math.PI * 2;
+const GOATCOUNTER_COUNT_ENDPOINT = "https://doublependulum.goatcounter.com/count";
+const GOATCOUNTER_TOTAL_ENDPOINT = "https://doublependulum.goatcounter.com/counter/TOTAL.json";
 const formatEnergy = (value: number) => value.toFixed(6).replace(/\.?0+$/, "");
 const assetUrl = (path: string) => new URL(path.replace(/^\/+/, ""), document.baseURI).toString();
 const wrapAngle = (angle: number) => ((angle + Math.PI) % TAU + TAU) % TAU - Math.PI;
@@ -275,6 +277,7 @@ export function OrbitViewer() {
   const [speed, setSpeed] = useState(2);
   const [theme, setTheme] = useState<ThemeMode>("dark");
   const [isSystemDrawerOpen, setIsSystemDrawerOpen] = useState(true);
+  const [visitorCount, setVisitorCount] = useState("—");
   const [error, setError] = useState("");
   const lastFrame = useRef<number | null>(null);
 
@@ -287,6 +290,28 @@ export function OrbitViewer() {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem("orbit-viewer-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (!document.querySelector(`script[data-goatcounter="${GOATCOUNTER_COUNT_ENDPOINT}"]`)) {
+      const script = document.createElement("script");
+      script.src = "https://gc.zgo.at/count.js";
+      script.async = true;
+      script.dataset.goatcounter = GOATCOUNTER_COUNT_ENDPOINT;
+      document.head.appendChild(script);
+    }
+
+    const controller = new AbortController();
+    fetch(GOATCOUNTER_TOTAL_ENDPOINT, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Visitor count unavailable");
+        return response.json();
+      })
+      .then((data: { count?: unknown }) => {
+        if (typeof data.count === "string") setVisitorCount(data.count);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     fetch(assetUrl("data/manifest.json")).then((response) => {
@@ -378,6 +403,7 @@ export function OrbitViewer() {
             <dl className="data-strip"><div className="datum"><dt>Energy</dt><dd>{formatEnergy(orbit.metadata.energy)}</dd></div><div className="datum"><dt>Period</dt><dd>{orbit.metadata.period.toFixed(4)}</dd></div><div className="datum"><dt>Family</dt><dd>{selectedFamily?.label ?? orbit.metadata.family_id}</dd></div><div className="datum"><dt>Samples</dt><dd>{orbit.metadata.sample_count}</dd></div></dl>
           </>}
         </section>
+        <footer className="site-footer"><p className="visitor-count" aria-live="polite" title="Total page visits, updated periodically by GoatCounter"><span>Visitors</span><strong>{visitorCount}</strong></p></footer>
       </div>
     </main>
   );

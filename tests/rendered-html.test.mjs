@@ -92,6 +92,15 @@ test("physical-model drawer chevron stays vertically centered", async () => {
   assert.match(css, /\.drawer-icon::before, \.drawer-icon::after\s*\{[^}]*top:\s*50%/);
 });
 
+test("GoatCounter records visits and renders the site total in the footer", async () => {
+  const source = await readFile(new URL("../app/OrbitViewer.tsx", import.meta.url), "utf8");
+  assert.match(source, /https:\/\/doublependulum\.goatcounter\.com\/count/);
+  assert.match(source, /https:\/\/doublependulum\.goatcounter\.com\/counter\/TOTAL\.json/);
+  assert.match(source, /https:\/\/gc\.zgo\.at\/count\.js/);
+  assert.match(source, /<footer className="site-footer">/);
+  assert.match(source, /className="visitor-count"[^>]*aria-live="polite"/);
+});
+
 test("exported orbit obeys the documented structural contract", async () => {
   const manifest = JSON.parse(await readFile(new URL("../public/data/manifest.json", import.meta.url), "utf8"));
   assert.equal(manifest.families.length, 2);
