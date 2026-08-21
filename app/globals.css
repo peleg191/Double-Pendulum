@@ -145,6 +145,8 @@ select option { color: var(--ink); background-color: var(--control); }
 .math-expression mo { padding-inline: .08em; }
 .canvas-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; min-height: 0; background: var(--panel); }
 canvas { display: block; width: 100%; height: 100%; }
+canvas[role="button"] { cursor: pointer; }
+canvas[role="button"]:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 65%, transparent); outline-offset: -3px; }
 
 .transport { display: grid; grid-template-columns: auto auto minmax(160px, 1fr) auto auto; gap: clamp(10px, 1.4vw, 18px); align-items: center; padding: 18px 22px; border-top: 1px solid var(--line); background: var(--transport); }
 .transport button { border: 1px solid var(--control-border); background: var(--control); color: var(--ink); min-width: 78px; height: 38px; padding: 0 14px; cursor: pointer; }

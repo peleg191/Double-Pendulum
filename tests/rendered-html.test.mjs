@@ -69,6 +69,15 @@ test("GitHub Pages self-hosts the same Geist fonts as localhost", async () => {
   assert.ok((await readFile(new URL("../pages-src/fonts/geist-mono-latin.woff2", import.meta.url))).byteLength > 20_000);
 });
 
+test("playback canvases toggle animation and default to double speed", async () => {
+  const source = await readFile(new URL("../app/OrbitViewer.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /interpolated state/i);
+  assert.match(source, /const \[speed, setSpeed\] = useState\(2\)/);
+  assert.equal([...source.matchAll(/role="button" tabIndex=\{0\} aria-pressed=\{playing\}/g)].length, 2);
+  assert.equal([...source.matchAll(/onClick=\{onTogglePlayback\}/g)].length, 2);
+  assert.equal([...source.matchAll(/event\.key === "Enter" \|\| event\.key === " "/g)].length, 2);
+});
+
 test("exported orbit obeys the documented structural contract", async () => {
   const manifest = JSON.parse(await readFile(new URL("../public/data/manifest.json", import.meta.url), "utf8"));
   assert.equal(manifest.families.length, 2);

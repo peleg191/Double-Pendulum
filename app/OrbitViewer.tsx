@@ -79,7 +79,7 @@ function useCanvas(draw: (ctx: CanvasRenderingContext2D, width: number, height: 
   return ref;
 }
 
-function PendulumCanvas({ orbit, phase, theme }: { orbit: OrbitData; phase: number; theme: ThemeMode }) {
+function PendulumCanvas({ orbit, phase, theme, playing, onTogglePlayback }: { orbit: OrbitData; phase: number; theme: ThemeMode; playing: boolean; onTogglePlayback: () => void }) {
   const state = sampleOrbit(orbit, phase);
   const ref = useCanvas((ctx, width, height) => {
     const colors = canvasPalette(theme);
@@ -124,7 +124,7 @@ function PendulumCanvas({ orbit, phase, theme }: { orbit: OrbitData; phase: numb
     ctx.fillStyle = colors.pendulum1; ctx.strokeStyle = colors.foreground; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(p1.x, p1.y, massRadius, 0, TAU); ctx.fill(); ctx.stroke();
     ctx.fillStyle = colors.pendulum2; ctx.beginPath(); ctx.arc(p2.x, p2.y, massRadius, 0, TAU); ctx.fill(); ctx.stroke();
   }, [orbit, phase, state.theta1, state.theta2, theme]);
-  return <canvas ref={ref} aria-label="Animated physical double pendulum" role="img" />;
+  return <canvas ref={ref} role="button" tabIndex={0} aria-pressed={playing} aria-label={`${playing ? "Pause" : "Play"} the animated physical double pendulum`} onClick={onTogglePlayback} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onTogglePlayback(); } }} />;
 }
 
 function MathVariable({ symbol, subscript, value, label }: { symbol: string; subscript?: number; value?: number; label: string }) {
@@ -192,7 +192,7 @@ function SystemSchematic({ theme }: { theme: ThemeMode }) {
   </div>;
 }
 
-function ConfigurationCanvas({ orbit, phase, theme }: { orbit: OrbitData; phase: number; theme: ThemeMode }) {
+function ConfigurationCanvas({ orbit, phase, theme, playing, onTogglePlayback }: { orbit: OrbitData; phase: number; theme: ThemeMode; playing: boolean; onTogglePlayback: () => void }) {
   const state = sampleOrbit(orbit, phase);
   const ref = useCanvas((ctx, width, height) => {
     const colors = canvasPalette(theme);
@@ -254,7 +254,7 @@ function ConfigurationCanvas({ orbit, phase, theme }: { orbit: OrbitData; phase:
     ctx.fillText("θ₁ (mod 2π)", margin.left + plotW / 2, height - 2);
     if (orbit.metadata.energy < 6) { const label = `Forbidden: V > E = ${formatEnergy(orbit.metadata.energy)}`; ctx.font = "bold 10px monospace"; ctx.textAlign = "left"; const labelWidth = ctx.measureText(label).width + 16; ctx.fillStyle = colors.background; ctx.fillRect(margin.left + 8, margin.top + plotH - 27, labelWidth, 20); ctx.strokeStyle = colors.grid; ctx.strokeRect(margin.left + 8, margin.top + plotH - 27, labelWidth, 20); ctx.fillStyle = colors.forbiddenBoundary; ctx.fillText(label, margin.left + 16, margin.top + plotH - 13); }
   }, [orbit, phase, state.theta1, state.theta2, theme]);
-  return <canvas ref={ref} aria-label="Configuration-space orbit with current-state marker" role="img" />;
+  return <canvas ref={ref} role="button" tabIndex={0} aria-pressed={playing} aria-label={`${playing ? "Pause" : "Play"} the configuration-space orbit animation`} onClick={onTogglePlayback} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onTogglePlayback(); } }} />;
 }
 
 function PotentialCondition() {
@@ -272,7 +272,7 @@ export function OrbitViewer() {
   const [selectedId, setSelectedId] = useState("");
   const [phase, setPhase] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  const [speed, setSpeed] = useState(2);
   const [theme, setTheme] = useState<ThemeMode>("dark");
   const [isSystemDrawerOpen, setIsSystemDrawerOpen] = useState(true);
   const [error, setError] = useState("");
@@ -355,6 +355,7 @@ export function OrbitViewer() {
     const nextOrbit = familyOrbits[Math.max(0, Math.min(familyOrbits.length - 1, nextIndex))];
     if (nextOrbit) setSelectedId(nextOrbit.id);
   };
+  const togglePlayback = useCallback(() => setPlaying((value) => !value), []);
   const chooseFamily = (familyId: string) => {
     setSelectedFamilyId(familyId);
     const firstOrbit = manifest?.orbits.find((item) => item.family_id === familyId);
@@ -372,8 +373,8 @@ export function OrbitViewer() {
         <section className="viewer" aria-label="Lyapunov orbit viewer">
           <div className="viewer-toolbar"><div className="selection-controls"><fieldset className="family-fieldset"><legend>Orbit family</legend><div className="family-tabs">{manifest?.families.map((family) => <label className={`family-option${selectedFamilyId === family.id ? " is-selected" : ""}`} key={family.id}><input type="radio" name="orbit-family" value={family.id} checked={selectedFamilyId === family.id} onChange={() => chooseFamily(family.id)} /><span className="family-name">{family.label}</span><span className="family-count">{family.orbit_count} orbits</span></label>)}</div></fieldset><div className="energy-control"><div className="energy-heading"><label htmlFor="energy-slider">Computed energy</label><div className="energy-value-actions"><output htmlFor="energy-slider">{selectedOrbitRecord ? <>E = {formatEnergy(selectedOrbitRecord.energy)}</> : "—"}</output>{record?.mat ? <span className="mat-download-wrap"><a className="mat-download" href={assetUrl(record.mat)} download aria-label="Download source MAT file" aria-describedby="mat-download-tooltip"><span aria-hidden="true">⇩</span></a><span className="mat-download-tooltip" id="mat-download-tooltip" role="tooltip">Download the authoritative MATLAB file containing the precomputed trajectory currently shown.</span></span> : null}</div></div><input id="energy-slider" className="energy-slider" type="range" min={familyOrbits[0]?.energy ?? 0} max={familyOrbits.at(-1)?.energy ?? 0} step="any" value={selectedOrbitRecord?.energy ?? 0} disabled={!familyOrbits.length} aria-valuetext={selectedOrbitRecord ? `Energy ${formatEnergy(selectedOrbitRecord.energy)}` : "No orbit selected"} onChange={(event) => chooseClosestEnergy(Number(event.target.value))} onKeyDown={handleEnergyKeys} /><div className="energy-scale"><span>{familyOrbits.length ? `E = ${formatEnergy(familyOrbits[0].energy)}` : "—"}</span><span>{familyOrbits.length} stored levels</span><span>{familyOrbits.length ? `E = ${formatEnergy(familyOrbits.at(-1)!.energy)}` : "—"}</span></div><div className="energy-alternative"><select id="energy-select" aria-label="Choose exact computed energy" value={selectedId} disabled={!familyOrbits.length} onChange={(event) => setSelectedId(event.target.value)}>{familyOrbits.map((item) => <option key={item.id} value={item.id}>E = {formatEnergy(item.energy)}</option>)}</select></div></div></div></div>
           {error ? <div className="error" role="alert">{error}</div> : !orbit ? <div className="loading" role="status">Loading trajectory…</div> : <>
-            <div className="visual-grid"><article className="panel"><div className="panel-heading"><h2>Physical pendulum</h2><span>interpolated state</span></div><div className="canvas-wrap"><PendulumCanvas orbit={orbit} phase={phase} theme={theme} /></div></article><article className="panel"><div className="panel-heading"><h2>Configuration space</h2><span><PotentialCondition /></span></div><div className="canvas-wrap"><ConfigurationCanvas orbit={orbit} phase={phase} theme={theme} /></div></article></div>
-            <div className="transport"><button className="primary" type="button" onClick={() => setPlaying((value) => !value)} aria-label={playing ? "Pause orbit" : "Play orbit"}>{playing ? "Pause" : "Play"}</button><button type="button" onClick={() => { setPlaying(false); setPhase(0); }}>Restart</button><input className="phase-slider" type="range" min="0" max="1" step="0.0005" value={phase} aria-label="Normalized orbit phase" onChange={(event) => { setPlaying(false); setPhase(Number(event.target.value)); }} /><span className="phase-label"><NormalizedTime phase={phase} /></span><select className="speed-select" aria-label="Playback speed" value={speed} onChange={(event) => setSpeed(Number(event.target.value))}>{[.25, .5, 1, 2].map((value) => <option key={value} value={value}>{value}×</option>)}</select></div>
+            <div className="visual-grid"><article className="panel"><div className="panel-heading"><h2>Physical pendulum</h2></div><div className="canvas-wrap"><PendulumCanvas orbit={orbit} phase={phase} theme={theme} playing={playing} onTogglePlayback={togglePlayback} /></div></article><article className="panel"><div className="panel-heading"><h2>Configuration space</h2><span><PotentialCondition /></span></div><div className="canvas-wrap"><ConfigurationCanvas orbit={orbit} phase={phase} theme={theme} playing={playing} onTogglePlayback={togglePlayback} /></div></article></div>
+            <div className="transport"><button className="primary" type="button" onClick={togglePlayback} aria-label={playing ? "Pause orbit" : "Play orbit"}>{playing ? "Pause" : "Play"}</button><button type="button" onClick={() => { setPlaying(false); setPhase(0); }}>Restart</button><input className="phase-slider" type="range" min="0" max="1" step="0.0005" value={phase} aria-label="Normalized orbit phase" onChange={(event) => { setPlaying(false); setPhase(Number(event.target.value)); }} /><span className="phase-label"><NormalizedTime phase={phase} /></span><select className="speed-select" aria-label="Playback speed" value={speed} onChange={(event) => setSpeed(Number(event.target.value))}>{[.25, .5, 1, 2].map((value) => <option key={value} value={value}>{value}×</option>)}</select></div>
             <dl className="data-strip"><div className="datum"><dt>Energy</dt><dd>{formatEnergy(orbit.metadata.energy)}</dd></div><div className="datum"><dt>Period</dt><dd>{orbit.metadata.period.toFixed(4)}</dd></div><div className="datum"><dt>Family</dt><dd>{selectedFamily?.label ?? orbit.metadata.family_id}</dd></div><div className="datum"><dt>Samples</dt><dd>{orbit.metadata.sample_count}</dd></div></dl>
           </>}
         </section>
