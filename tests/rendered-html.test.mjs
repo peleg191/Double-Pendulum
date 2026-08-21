@@ -79,6 +79,11 @@ test("playback canvases toggle animation and default to double speed", async () 
   assert.equal([...source.matchAll(/event\.key === "Enter" \|\| event\.key === " "/g)].length, 2);
 });
 
+test("family and energy selectors are top-aligned", async () => {
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(css, /\.selection-controls\s*\{[^}]*align-items:\s*start/);
+});
+
 test("exported orbit obeys the documented structural contract", async () => {
   const manifest = JSON.parse(await readFile(new URL("../public/data/manifest.json", import.meta.url), "utf8"));
   assert.equal(manifest.families.length, 2);

@@ -101,7 +101,7 @@ h1 { margin: 0; width: 100%; max-width: none; font-size: clamp(42px, 7vw, 100px)
 
 .viewer { border: 1px solid var(--line); background: var(--panel); box-shadow: 0 26px 70px var(--shadow); }
 .viewer-toolbar { padding: 22px; border-bottom: 1px solid var(--line); background: var(--transport); }
-.selection-controls { display: grid; grid-template-columns: minmax(300px, .8fr) minmax(340px, 1.2fr); gap: clamp(24px, 4vw, 58px); align-items: end; }
+.selection-controls { display: grid; grid-template-columns: minmax(300px, .8fr) minmax(340px, 1.2fr); gap: clamp(24px, 4vw, 58px); align-items: start; }
 .family-fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .family-fieldset legend, .energy-heading label { display: block; margin: 0 0 10px; font: 600 11px var(--font-geist-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .family-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
