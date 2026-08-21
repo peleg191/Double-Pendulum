@@ -73,7 +73,10 @@ h1 { margin: 0; width: 100%; max-width: none; font-size: clamp(42px, 7vw, 100px)
 .system-drawer-bar h2 { margin: 0; font-size: 19px; letter-spacing: -.02em; font-weight: 600; }
 .drawer-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-width: 116px; height: 38px; border: 1px solid var(--control-border); background: var(--control); color: var(--ink); cursor: pointer; font: 600 11px var(--font-geist-mono); letter-spacing: .04em; }
 .drawer-toggle:hover { border-color: var(--accent); }
-.drawer-icon { color: var(--accent); font-size: 18px; line-height: 1; transform: rotate(180deg); transition: transform .38s cubic-bezier(.2, .8, .2, 1); }
+.drawer-icon { position: relative; display: block; flex: 0 0 14px; width: 14px; height: 14px; color: var(--accent); transform: rotate(180deg); transform-origin: 50% 50%; transition: transform .38s cubic-bezier(.2, .8, .2, 1); }
+.drawer-icon::before, .drawer-icon::after { content: ""; position: absolute; top: 50%; width: 8px; height: 2px; background: currentColor; transform-origin: 50% 50%; }
+.drawer-icon::before { left: 0; transform: translateY(-50%) rotate(-40deg); }
+.drawer-icon::after { right: 0; transform: translateY(-50%) rotate(40deg); }
 .system-drawer.is-open .drawer-icon { transform: rotate(0deg); }
 .system-drawer-reveal { display: grid; grid-template-rows: 0fr; opacity: 0; border-top: 0 solid var(--line); pointer-events: none; visibility: hidden; transition: grid-template-rows .42s cubic-bezier(.2, .8, .2, 1), opacity .28s ease, border-top-width .42s ease, visibility 0s linear .42s; }
 .system-drawer.is-open .system-drawer-reveal { grid-template-rows: 1fr; opacity: 1; border-top-width: 1px; pointer-events: auto; visibility: visible; transition: grid-template-rows .42s cubic-bezier(.2, .8, .2, 1), opacity .3s ease .08s, border-top-width .42s ease, visibility 0s; }

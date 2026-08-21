@@ -84,6 +84,14 @@ test("family and energy selectors are top-aligned", async () => {
   assert.match(css, /\.selection-controls\s*\{[^}]*align-items:\s*start/);
 });
 
+test("physical-model drawer chevron stays vertically centered", async () => {
+  const source = await readFile(new URL("../app/OrbitViewer.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(source, /<span className="drawer-icon" aria-hidden="true" \/>/);
+  assert.match(css, /\.drawer-icon\s*\{[^}]*height:\s*14px[^}]*transform-origin:\s*50% 50%/);
+  assert.match(css, /\.drawer-icon::before, \.drawer-icon::after\s*\{[^}]*top:\s*50%/);
+});
+
 test("exported orbit obeys the documented structural contract", async () => {
   const manifest = JSON.parse(await readFile(new URL("../public/data/manifest.json", import.meta.url), "utf8"));
   assert.equal(manifest.families.length, 2);
